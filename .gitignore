@@ -1,0 +1,75 @@
+# ===========================================================================
+# Google Android Platform-Tools & Binary Exclusions
+# ===========================================================================
+# Do not commit proprietary or platform-dependent binaries to the repository.
+# Users should download platform-tools from Google's official CDN.
+*.exe
+*.dll
+*.so
+*.dylib
+platform-tools/
+platform-tools-*/
+platform-tools.zip
+platform-tools-*.zip
+AdbWinApi.dll
+AdbWinUsbApi.dll
+libwinpthread-1.dll
+adb
+fastboot
+mke2fs
+make_f2fs
+make_f2fs_casefold
+etc1tool
+hprof-conv
+sqlite3
+mke2fs.conf
+source.properties
+NOTICE.txt
+
+# ===========================================================================
+# Python Environments & Bytecode
+# ===========================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+venv/
+env/
+ENV/
+.env/
+
+# ===========================================================================
+# IDE & Operating System Artifacts
+# ===========================================================================
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ===========================================================================
+# Temporary Files, Logs & Scratch
+# ===========================================================================
+*.log
+scratch/
+temp_*
+*.tmp
