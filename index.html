@@ -3181,17 +3181,24 @@
       }
     }
 
-    // 15-Button Dual-Engine Execution with Direct Feedback
-    async function sendCmd(keyName, btnId) {
+    // 15-Button Dual-Engine Execution — fire-and-forget for zero-latency UI feedback.
+    // UI state updates happen immediately; the HTTP request is sent in the background.
+    function sendCmd(keyName, btnId) {
       showTapFeedback(keyName, btnId);
       setStatus('[OK] ' + keyName.toUpperCase(), 'ok');
       logTerminal('REMOTE: ' + keyName);
-      const d = await postJson('/cmd', { key: keyName });
-      if (!d.ok) {
-        showTapError(d.error || 'NO ROUTE');
-        setStatus('[ERR] ' + (d.error || 'FAILED'), 'err');
-        if (d.error) logTerminal('ERR: ' + d.error, true);
-      }
+      fetch('/cmd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: keyName }),
+        keepalive: true
+      }).then(r => r.json()).then(d => {
+        if (!d.ok) {
+          showTapError(d.error || 'NO ROUTE');
+          setStatus('[ERR] ' + (d.error || 'FAILED'), 'err');
+          if (d.error) logTerminal('ERR: ' + d.error, true);
+        }
+      }).catch(() => {});
     }
 
     let mouseMode = false;

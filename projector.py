@@ -300,21 +300,8 @@ class AdbController:
         if not self.is_connected:
             return False
 
-        # For discrete actions or whenever fallback is allowed: execute direct, robust subprocess.run
-        # This completely avoids Windows anonymous pipe buffering issues, ensuring 100% command delivery.
-        if allow_fallback:
-            try:
-                res = subprocess.run(
-                    [self.adb_path, "-s", f"{self.target_ip}:5555", "shell", cmd_line],
-                    capture_output=True,
-                    text=True,
-                    timeout=2.5,
-                )
-                return res.returncode == 0
-            except Exception:
-                return False
-
-        # For continuous high-frequency mouse streams (allow_fallback=False): use the persistent pipe
+        # Primary path: persistent shell pipe (zero subprocess spawn overhead).
+        # allow_fallback flag is kept for API compat but both paths now prefer the pipe.
         with self.lock:
             if self.shell_proc is None or self.shell_proc.poll() is not None:
                 self._spawn_shell()
@@ -333,6 +320,19 @@ class AdbController:
                             return True
                         except Exception:
                             pass
+
+        # Last-resort fallback: subprocess.run if the pipe is completely dead.
+        if allow_fallback:
+            try:
+                res = subprocess.run(
+                    [self.adb_path, "-s", f"{self.target_ip}:5555", "shell", cmd_line],
+                    capture_output=True,
+                    text=True,
+                    timeout=2.5,
+                )
+                return res.returncode == 0
+            except Exception:
+                pass
         return False
 
     def send_key(self, key_name):
@@ -349,17 +349,8 @@ class AdbController:
         if not keycode.startswith("KEYCODE_") and not keycode.isdigit():
             keycode = f"KEYCODE_{keycode.upper()}"
 
-        # Dispatch input keyevent via ADB shell with fast timeout
-        try:
-            res = subprocess.run(
-                [self.adb_path, "-s", f"{self.target_ip}:5555", "shell", f"input keyevent {keycode}"],
-                capture_output=True,
-                text=True,
-                timeout=2.0,
-            )
-            return res.returncode == 0
-        except Exception:
-            return False
+        # Route through persistent shell pipe — eliminates subprocess spawn + ADB handshake per key.
+        return self.send_shell_command(f"input keyevent {keycode}")
 
     def send_relative_mouse(self, dx, dy):
         idx = int(dx)
