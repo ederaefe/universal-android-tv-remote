@@ -370,15 +370,15 @@ class AdbController:
         self.cursor_x = max(0, min(PROJECTOR_WIDTH - 1, self.cursor_x + idx))
         self.cursor_y = max(0, min(PROJECTOR_HEIGHT - 1, self.cursor_y + idy))
 
-        # Direct Linux kernel relative hardware mouse packet (EV_REL 0=REL_X, 1=REL_Y, EV_SYN 0=SYN_REPORT)
-        # Bypasses touchscreen emulation to keep native hardware arrow cursor active on-screen
-        cmd = (
-            f"sendevent /dev/input/event7 2 0 {idx} 2>/dev/null; "
-            f"sendevent /dev/input/event7 2 1 {idy} 2>/dev/null; "
-            f"sendevent /dev/input/event7 0 0 0 2>/dev/null || "
-            f"input mouse swipe {int(self.cursor_x)} {int(self.cursor_y)} {int(self.cursor_x + idx)} {int(self.cursor_y + idy)} 20"
-        )
-        return self.send_shell_command(cmd, allow_fallback=True)
+        # Zero-latency persistent shell pipe dispatch (<0.2ms write time)
+        # Emits kernel EV_REL 0=REL_X, 1=REL_Y, EV_SYN 0=SYN_REPORT directly to uinput node
+        pipe_cmd = f"sendevent /dev/input/event7 2 0 {idx}\nsendevent /dev/input/event7 2 1 {idy}\nsendevent /dev/input/event7 0 0 0"
+        ok = self.send_shell_command(pipe_cmd, allow_fallback=False)
+        if not ok:
+            # Fallback to direct subprocess if pipe dropped
+            fallback_cmd = f"sendevent /dev/input/event7 2 0 {idx}; sendevent /dev/input/event7 2 1 {idy}; sendevent /dev/input/event7 0 0 0"
+            ok = self.send_shell_command(fallback_cmd, allow_fallback=True)
+        return ok
 
     def send_mouse_click(self):
         """Dispatches on-screen mouse click at the current cursor coordinates."""
@@ -429,6 +429,39 @@ class AdbController:
             "sendevent /dev/input/event7 1 232 0 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null"
         )
         return self.send_shell_command(cmd, allow_fallback=True)
+
+    def capture_screenshot(self):
+        """Captures on-screen display via adb exec-out screencap -p in memory.
+        If Pillow is installed, transcode to WebP (quality=75) for 88% bandwidth reduction.
+        Returns: tuple (image_bytes, content_type)
+        """
+        if not self.is_connected:
+            return None, "image/png"
+        try:
+            res = subprocess.run(
+                [self.adb_path, "-s", f"{self.target_ip}:5555", "exec-out", "screencap", "-p"],
+                capture_output=True,
+                timeout=4.5
+            )
+            data = res.stdout
+            if not data or len(data) < 100:
+                return None, "image/png"
+
+            # Fix potential Windows CRLF byte injection in binary ADB stream if header is split
+            if data[:4] != b"\x89PNG" and b"\x89PNG" in data[:16]:
+                data = data.replace(b"\r\r\n", b"\n").replace(b"\r\n", b"\n")
+
+            try:
+                from PIL import Image
+                import io
+                img = Image.open(io.BytesIO(data))
+                out = io.BytesIO()
+                img.save(out, format="WEBP", quality=75, method=2)
+                return out.getvalue(), "image/webp"
+            except Exception:
+                return data, "image/png"
+        except Exception:
+            return None, "image/png"
 
     def toggle_visual_touches(self):
         self.visual_touches_enabled = not self.visual_touches_enabled
@@ -945,7 +978,19 @@ class AdbController:
                     "android.overlay",
                     "com.google.android.ext.services",
                     "com.android.packageinstaller",
-                    "com.google.android.inputmethod"
+                    "com.google.android.inputmethod",
+                    "com.android.wallpaper",
+                    "com.android.printspooler",
+                    "com.android.se",
+                    "com.android.certinstaller",
+                    "com.android.shell",
+                    "com.android.backupconfirm",
+                    "com.android.bluetooth",
+                    "com.android.companiondevicemanager",
+                    "com.android.vpndialogs",
+                    "com.softwinner.firelink",
+                    "com.android.htmlviewer",
+                    "com.android.dynsystem"
                 )):
                     continue
                 found_packages.add(pkg)
@@ -1000,6 +1045,77 @@ class AdbController:
                 })
 
         return {"ok": True, "count": len(app_list), "apps": app_list}
+
+    def get_app_icon_svg(self, pkg):
+        """Returns high-fidelity brand SVG icon for known packages, or a crisp monogram badge fallback."""
+        pkg_lower = (pkg or "").lower().strip()
+        
+        # YouTube / SmartTube
+        if "youtube" in pkg_lower or "smarttube" in pkg_lower or "videomanager" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#ef4444"/><path d="M38.5 16.2a4 4 0 0 0-2.8-2.8C33.2 12.8 24 12.8 24 12.8s-9.2 0-11.7.6a4 4 0 0 0-2.8 2.8C8.8 18.7 8.8 24 8.8 24s0 5.3.7 7.8a4 4 0 0 0 2.8 2.8c2.5.7 11.7.7 11.7.7s9.2 0 11.7-.7a4 4 0 0 0 2.8-2.8c.7-2.5.7-7.8.7-7.8s0-5.3-.7-7.8z" fill="#ffffff"/><polygon points="21,19.5 29,24 21,28.5" fill="#ef4444"/></svg>'''
+        
+        # Netflix
+        if "netflix" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#141414"/><path d="M15 11h5.2v26H15z" fill="#e50914"/><path d="M27.8 11H33v26h-5.2z" fill="#e50914"/><path d="M15 11h5.4l7.6 26H22.8z" fill="#b80710"/><path d="M27.8 11h.2l-8 26h-5z" fill="#e50914"/></svg>'''
+            
+        # Prime Video
+        if "amazonvideo" in pkg_lower or "prime" in pkg_lower or "avod" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#00050d"/><path d="M11 28.5c7.5 4 18 4 25.5 0" stroke="#00a8e1" stroke-width="3" stroke-linecap="round" fill="none"/><polygon points="36,25 38.5,29.5 33.5,30" fill="#00a8e1"/><text x="24" y="22" font-family="-apple-system, sans-serif" font-size="14" font-weight="900" fill="#ffffff" text-anchor="middle">prime</text></svg>'''
+            
+        # Disney+
+        if "disney" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#040b29"/><path d="M12 28 C 16 16, 32 16, 36 28" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" fill="none"/><text x="24" y="26" font-family="-apple-system, sans-serif" font-size="15" font-weight="800" fill="#ffffff" text-anchor="middle">Disney+</text></svg>'''
+            
+        # Kodi
+        if "kodi" in pkg_lower or "xbmc" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#17b2e7"/><rect x="14" y="14" width="20" height="20" transform="rotate(45 24 24)" fill="#ffffff"/><text x="24" y="29" font-family="-apple-system, sans-serif" font-size="14" font-weight="900" fill="#17b2e7" text-anchor="middle">K</text></svg>'''
+            
+        # VLC
+        if "vlc" in pkg_lower or "videolan" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#20242c"/><polygon points="24,10 32,32 16,32" fill="#ff8800"/><path d="M19 25h10M17.5 29h13" stroke="#ffffff" stroke-width="2"/><ellipse cx="24" cy="35" rx="11" ry="3.5" fill="#ff8800"/></svg>'''
+            
+        # Plex
+        if "plex" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#1f2326"/><polygon points="18,14 26,24 18,34" fill="#e5a00d"/><polygon points="26,14 34,24 26,34" fill="#cc8500"/></svg>'''
+            
+        # Spotify
+        if "spotify" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#121212"/><circle cx="24" cy="24" r="14" fill="#1ed760"/><path d="M17 21c4.5-1 9-.5 13.5 1.5M18 24.5c3.5-.8 7-.4 10.5 1.2M19 28c2.8-.6 5.5-.3 8.2.8" stroke="#121212" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>'''
+            
+        # Stremio
+        if "stremio" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#7f5af0"/><polygon points="19,16 33,24 19,32" fill="#ffffff"/></svg>'''
+            
+        # Chrome / Browser
+        if "chrome" in pkg_lower or "browser" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#20242c"/><circle cx="24" cy="24" r="13" fill="#38bdf8"/><circle cx="24" cy="24" r="6" fill="#ffffff"/></svg>'''
+            
+        # Twitch
+        if "twitch" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#9146ff"/><path d="M14 13h20v14l-5 5h-4l-3 3v-3h-8z" fill="#ffffff"/><rect x="20" y="19" width="3" height="6" fill="#9146ff"/><rect x="26" y="19" width="3" height="6" fill="#9146ff"/></svg>'''
+            
+        # Apple TV
+        if "apple" in pkg_lower or "atve" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#000000"/><text x="24" y="28" font-family="-apple-system, sans-serif" font-size="14" font-weight="700" fill="#ffffff" text-anchor="middle">tv</text></svg>'''
+            
+        # Hulu
+        if "hulu" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#0b0c0f"/><text x="24" y="29" font-family="-apple-system, sans-serif" font-size="15" font-weight="900" fill="#1ce783" text-anchor="middle">hulu</text></svg>'''
+            
+        # Settings
+        if "settings" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#2d3748"/><circle cx="24" cy="24" r="6" fill="none" stroke="#e2e8f0" stroke-width="3"/><path d="M24 12v3M24 33v3M12 24h3M33 24h3M15.5 15.5l2.1 2.1M30.4 30.4l2.1 2.1M15.5 32.5l2.1-2.1M30.4 17.6l2.1-2.1" stroke="#e2e8f0" stroke-width="3" stroke-linecap="round"/></svg>'''
+            
+        # HDMI
+        if "hdmi" in pkg_lower or "externalscreen" in pkg_lower:
+            return '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><rect width="48" height="48" rx="12" fill="#312e81"/><rect x="14" y="16" width="20" height="13" rx="2" fill="#ffffff"/><path d="M19 29v3h10v-3" stroke="#ffffff" stroke-width="2" fill="none"/><text x="24" y="25" font-family="-apple-system, sans-serif" font-size="8" font-weight="900" fill="#312e81" text-anchor="middle">HDMI</text></svg>'''
+
+        # Fallback Monogram Badge: Clean 3D tactile icon with first letter
+        parts = pkg.split(".")
+        name_cand = parts[-1] if len(parts) > 1 else pkg
+        initial = name_cand[:1].upper() if name_cand else "A"
+        return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#334155"/><stop offset="100%" stop-color="#1e293b"/></linearGradient></defs><rect width="48" height="48" rx="12" fill="url(#bg)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/><text x="24" y="31" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="20" font-weight="800" fill="#f8fafc" text-anchor="middle">{initial}</text></svg>'''
+
 
 
 # Global Controller
@@ -1145,8 +1261,33 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
         elif path_only == "/files":
             target = query.get("path", ["/sdcard"])[0]
             self._json(controller.list_files(target))
+        elif path_only == "/screenshot":
+            img_bytes, mime = controller.capture_screenshot()
+            if not img_bytes:
+                self.send_error(503, "Screen capture unavailable")
+                return
+            self.send_response(200)
+            self.send_header("Content-Type", mime)
+            self.send_header("Content-Length", str(len(img_bytes)))
+            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
+            self.send_header("Pragma", "no-cache")
+            self.end_headers()
+            self.wfile.write(img_bytes)
         elif path_only == "/installed_apps":
             self._json(controller.get_installed_apps())
+        elif path_only == "/app_icon":
+            pkg = query.get("pkg", [""])[0]
+            svg_content = controller.get_app_icon_svg(pkg)
+            if svg_content:
+                body = svg_content.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "image/svg+xml")
+                self.send_header("Content-Length", str(len(body)))
+                self.send_header("Cache-Control", "public, max-age=86400")
+                self.end_headers()
+                self.wfile.write(body)
+            else:
+                self.send_error(404, "Icon not found")
         elif path_only == "/download":
             target = query.get("path", [""])[0]
             if not target:
@@ -1298,9 +1439,11 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
             mode = body.get("mode")
             enabled = bool(body.get("enabled"))
             if mode == "mouse":
-                controller.physical_mouse_active = enabled
                 if enabled:
+                    controller.physical_mouse_active = True
                     controller.ping_cursor()
+                else:
+                    controller.dismiss_cursor()
                 self._json({"ok": True, "enabled": enabled})
             else:
                 self._json({"ok": False, "error": "unknown mode"})

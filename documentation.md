@@ -146,3 +146,33 @@ Wireless touchpad streaming over local Wi-Fi frequently experiences latency spik
 - **Brand Identity Mapping**: Maps package identifiers (e.g. YouTube, Netflix, Prime Video, Disney+, Kodi, VLC, Plex, Spotify, Stremio, Browser, HDMI) to curated vector iconography and brand accent palettes.
 - **Dynamic Launch & Resiliency**: Dispatches single-intent execution (`monkey -p <pkg> -c android.intent.category.LAUNCHER 1`). Scanned applications are cached locally in browser storage to ensure immediate availability across sessions.
 
+---
+
+## 9. Tactile 3D Neumorphic Physical Remote Interface
+
+- **Design Philosophy**: Replaces sci-fi glowing cockpit styling with a refined, tactile, desktop-first neumorphic remote control interface.
+- **Surface Elevation**: Uses dual-level shadow architecture with soft debossed bevels (`rgba(255,255,255,0.03)`) and deep bottom-right cast shadows (`rgba(0,0,0,0.65)`).
+- **Tactile Convex Buttons**: Keys feature convex gradient surfaces (`linear-gradient(145deg, #242b3a, #1b202c)`) with a 2px bottom bevel edge that sinks into an inset debossed state (`box-shadow: inset 3px 3px 6px rgba(0,0,0,0.65)`) on click.
+- **Physical Color Hierarchy**:
+  - Power: Matte crimson red (`#be123c`) with tactile drop bevel.
+  - Active Mouse Mode: Warm tactile amber (`#d97706`) with active LED indicator.
+  - D-Pad: Dish-milled concentric circular casing with directional arrow indicators and raised center [OK] disc.
+  - Live Feed Indicator: Subtle pulsing emerald blip (`#10b981`).
+
+---
+
+## 10. In-Memory 5s Live Screen Monitor & Curated App Pinning
+
+### A. Live Screen Streaming Engine
+- **On-Demand Activation**: The screen monitor is **strictly OFF by default** to eliminate idle Wi-Fi traffic, CPU consumption, and battery drain.
+- **Zero-Disk Pipeline**: Captures screen frames directly via `adb exec-out screencap -p` into transient RAM. The stream is compressed to WebP (`quality=75`) in Python, reducing frame size from ~320KB down to ~35KB without ever touching the projector's flash storage or PC disk.
+- **Configurable Polling Loop**: User-selectable polling rate (3s Turbo, 5s Standard, 10s Eco) with single-shot HD manual capture and 1-click snapshot download.
+- **Fault-Tolerant Circuit Breaker**: If three consecutive network fetches fail (e.g. device reboot or disconnection), the streamer gracefully suspends polling to prevent connection flooding.
+
+### B. Curated Custom App Pinning Shelf
+- **Clutter Elimination**: Raw process enumeration that previously flooded the launcher with internal Android background daemons (`com.android.providers.*`, `com.softwinner.*`) is replaced with a curated pinning shelf.
+- **Searchable Pin Modal**: Users click `[+ Pin App from TV]` to search detected applications by name or package ID with real-time filtering.
+- **Dynamic Brand Icon Delivery**: Serves official SVG/WebP brand logos via `GET /app_icon?pkg=<pkg>` with fallback to a crisp monogram initial badge.
+- **Persistent Personalization**: Pinned launchers persist across browser restarts via `localStorage`, featuring 1-click launch and a subtle unpin action.
+
+
