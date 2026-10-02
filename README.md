@@ -31,14 +31,24 @@ Before connecting over the network, enable Developer Options and Network Debuggi
 
 ---
 
-### Option A: Web Control Panel (Windows, Linux, macOS with Python)
+### Option A(recommended): Web Control Panel (Windows, Linux, macOS with Python)
+
+Prequisite:
+Download and extract the Android Developer Bridge
+Download 
+```txt
+https://dl.google.com/android/repository/platform-tools-latest-windows.zip
+```
+Into the extracted folder e.g 
+```text
+Downloads\platform-tools-latest-windows\platform-tools
+```
 
 1. Clone or download this repository:
    ```bash
    git clone https://github.com/ederaefe/universal-android-tv-remote.git
-   cd /universal-android-tv-remote
    ```
-2. Place `adb.exe` (or `adb` on Linux/macOS) in the folder, or ensure `adb` is in your system PATH.
+2.  Place `adb.exe` (or `adb` on Linux/macOS) in the folder, or ensure `adb` is in the same folder.
 3. Start the server:
    - **Windows**: Double-click `remote.bat` or run:
      ```cmd
