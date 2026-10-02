@@ -367,22 +367,29 @@ class AdbController:
         if idx == 0 and idy == 0:
             return True
 
-        prev_x = int(self.cursor_x)
-        prev_y = int(self.cursor_y)
         self.cursor_x = max(0, min(PROJECTOR_WIDTH - 1, self.cursor_x + idx))
         self.cursor_y = max(0, min(PROJECTOR_HEIGHT - 1, self.cursor_y + idy))
-        curr_x = int(self.cursor_x)
-        curr_y = int(self.cursor_y)
 
-        # Ultra-responsive micro-swipe (20ms) to glide pointer across screen without overshoot
-        cmd = f"input mouse swipe {prev_x} {prev_y} {curr_x} {curr_y} 20 || input swipe {prev_x} {prev_y} {curr_x} {curr_y} 20"
+        # Direct Linux kernel relative hardware mouse packet (EV_REL 0=REL_X, 1=REL_Y, EV_SYN 0=SYN_REPORT)
+        # Bypasses touchscreen emulation to keep native hardware arrow cursor active on-screen
+        cmd = (
+            f"sendevent /dev/input/event7 2 0 {idx} 2>/dev/null; "
+            f"sendevent /dev/input/event7 2 1 {idy} 2>/dev/null; "
+            f"sendevent /dev/input/event7 0 0 0 2>/dev/null || "
+            f"input mouse swipe {int(self.cursor_x)} {int(self.cursor_y)} {int(self.cursor_x + idx)} {int(self.cursor_y + idy)} 20"
+        )
         return self.send_shell_command(cmd, allow_fallback=True)
 
     def send_mouse_click(self):
         """Dispatches on-screen mouse click at the current cursor coordinates."""
         cx = int(self.cursor_x)
         cy = int(self.cursor_y)
-        cmd = f"input mouse tap {cx} {cy} || input tap {cx} {cy} || input keyevent KEYCODE_DPAD_CENTER"
+        # Native hardware BTN_MOUSE (EV_KEY 0x110 / 272) click on uinput mouse node with fallback
+        cmd = (
+            "sendevent /dev/input/event7 1 272 1 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null; "
+            "sendevent /dev/input/event7 1 272 0 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null || "
+            f"input mouse tap {cx} {cy} || input tap {cx} {cy} || input keyevent KEYCODE_DPAD_CENTER"
+        )
         return self.send_shell_command(cmd, allow_fallback=True)
 
     def send_mouse_wheel(self, delta):
@@ -403,32 +410,25 @@ class AdbController:
         """Wakes up and reveals the on-screen cursor on the projector display."""
         self.physical_mouse_active = True
         self.visual_touches_enabled = True
-        cx = int(self.cursor_x)
-        cy = int(self.cursor_y)
-        node = self.input_device if (self.input_device and self.input_device.startswith("/dev/input/")) else "/dev/input/event7"
-        # 1. Send low-level Linux kernel sendevent on the IR node (EV_KEY 122) matching physical remote
-        # 2. Send KEYCODE_MOVE_HOME for framework compatibility
-        # 3. Enable visual touch indicator
-        # 4. Inject a crisp micro swipe to force Android WindowManager to paint the arrow cursor
+        # Pulse KEY 232 (MOUSE toggle defined in sunxi-ir-uinput.kl) and relative micro-nudge to display arrow
         cmd = (
-            f"sendevent {node} 1 122 1 2>/dev/null; sendevent {node} 0 0 0 2>/dev/null; "
-            f"sendevent {node} 1 122 0 2>/dev/null; sendevent {node} 0 0 0 2>/dev/null; "
-            "input keyevent KEYCODE_MOVE_HOME 2>/dev/null; "
-            "settings put system show_touches 1; "
-            f"input mouse swipe {cx} {cy} {cx + 2} {cy + 2} 25 || input swipe {cx} {cy} {cx + 2} {cy + 2} 25"
+            "sendevent /dev/input/event7 1 232 1 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null; "
+            "sendevent /dev/input/event7 1 232 0 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null; "
+            "sendevent /dev/input/event7 2 0 1 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null; "
+            "sendevent /dev/input/event7 2 0 -1 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null"
         )
         return self.send_shell_command(cmd, allow_fallback=True)
 
     def dismiss_cursor(self):
-        """Hides and dismisses the on-screen mouse pointer and disables visual touches."""
+        """Hides and dismisses the on-screen mouse pointer and restores grid navigation."""
         self.physical_mouse_active = False
         self.visual_touches_enabled = False
-        node = self.input_device if (self.input_device and self.input_device.startswith("/dev/input/")) else "/dev/input/event7"
-        return self.send_shell_command(
-            f"sendevent {node} 1 122 1 2>/dev/null; sendevent {node} 0 0 0 2>/dev/null; "
-            f"sendevent {node} 1 122 0 2>/dev/null; sendevent {node} 0 0 0 2>/dev/null; "
-            "settings put system show_touches 0; input keyevent KEYCODE_MOVE_HOME 2>/dev/null"
+        # Pulse KEY 232 to dismiss the hardware pointer
+        cmd = (
+            "sendevent /dev/input/event7 1 232 1 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null; "
+            "sendevent /dev/input/event7 1 232 0 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null"
         )
+        return self.send_shell_command(cmd, allow_fallback=True)
 
     def toggle_visual_touches(self):
         self.visual_touches_enabled = not self.visual_touches_enabled

@@ -138,8 +138,8 @@ Wireless touchpad streaming over local Wi-Fi frequently experiences latency spik
 - **Discrete Tap**: Dispatches an immediate 36-pixel relative step (`/mouse_rel`), providing crisp, single-element targeting without delay.
 - **Hold-to-Glide**: Engaging a hold for more than 250ms transitions into continuous gliding, dispatching 45-pixel steps every 85ms until released.
 - **Hardware Coordinate Bounding**: Coordinates are clamped to the target display boundary (`[0, 1279]`, `[0, 719]`).
-- **Tactile Selection**: Center OK, Enter, and Spacebar dispatch an immediate touch click at the exact coordinates of the virtual pointer.
-- **Hardware Wake Signaling**: Awakens the hardware cursor via raw Linux kernel input event generation (`EV_KEY 122 KEYCODE_MOVE_HOME`) sent directly to `/dev/input/eventX` alongside system touch indicators.
+- **Hardware uinput Kernel Routing**: Routes relative motion deltas (`EV_REL 0 <dx>; EV_REL 1 <dy>; EV_SYN 0 0`) directly to `/dev/input/event7` (`sunxi-ir-uinput`), triggering Android's native `CursorInputMapper` to render the true hardware arrow cursor instead of touch circles.
+- **Hardware Mouse Button & Toggle**: Dispatches native `BTN_MOUSE` (type 1 `EV_KEY`, code 272 `0x110`) for pointer clicks, and pulses hardware `KEY 232 MOUSE` on `/dev/input/event7` to wake and dismiss the cursor strictly while mouse mode is active.
 
 ### B. Dynamic TV App Discovery Architecture
 - **Package Enumeration**: Queries Android `cmd package query-activities` for user-launchable activities (`CATEGORY_LAUNCHER` and `CATEGORY_LEANBACK_LAUNCHER`) over ADB.
