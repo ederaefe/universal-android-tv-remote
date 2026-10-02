@@ -108,3 +108,24 @@ The Python server (`projector.py`) exposes a lightweight JSON API consumed by `i
 1. **Local Network Boundary**: The server binds to local interfaces. No cloud communication, telemetry, or external tracking is performed.
 2. **CORS & Direct Browser Sockets**: Standard web browsers enforce sandbox boundaries preventing direct TCP connections to `ip:5555`. The lightweight bridge server acts as the protocol adapter.
 3. **No Root Requirement**: All capabilities operate through standard user-level ADB debugging permissions (`adbd`).
+
+---
+
+## 6. Dynamic Animated Favicon Specification
+
+The browser tab icon uses an SVG SMIL animated vector representation of a futuristic radar/Wi-Fi emitter:
+- **Base Geometry**: Circular dark capsule (`#090b10`) with glowing outer border and 3 concentric parabolic radiation arcs.
+- **Animation Profile**: Cascading opacity and stroke-width waves pulsing outwards from the base transmitter dot at staggered intervals (`0s`, `0.3s`, `0.6s`) over a 1.8-second cycle.
+- **State Feedback**:
+  - Connected: Neon Cyan (`#00f3ff`) with cyan atmospheric glow (`#38bdf8`).
+  - Disconnected/Error: Neon Ruby Red (`#ef4444`) with crimson atmospheric glow (`#f87171`).
+  - Implemented concurrently via data URI in `index.html` DOM replacement and server-side SVG delivery on `/favicon.ico`.
+
+---
+
+## 7. Packaging & Continuous Delivery Pipeline
+
+- **Distribution Format**: Self-contained ZIP archive containing only runtime source code, shell/batch launchers, and documentation.
+- **Integrity**: SHA-256 digest generated during packaging and verified prior to release publishing.
+- **CI/CD Automation**: GitHub Actions workflow (`.github/workflows/release.yml`) automatically triggers on semver tags (`v*.*.*`), runs `scripts/bundle_release.py`, and attaches the distribution archive to GitHub Releases.
+
