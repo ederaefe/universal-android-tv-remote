@@ -9,6 +9,10 @@ A high-performance, zero-install Web Remote and CLI Controller designed for **HY
 
 If your physical projector remote is lost, broken, or unresponsive, this tool restores complete control over local Wi-Fi using standard Android Debug Bridge (ADB). No Android rooting, no custom APK sideloading, and no external cloud services are required.
 
+<p align="center">
+  <img src="assets/preview.png" alt="Universal Android TV & Projector Remote Command Cockpit" width="100%">
+</p>
+
 ---
 
 ## Key Features
