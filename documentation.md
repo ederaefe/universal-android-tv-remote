@@ -129,3 +129,20 @@ The browser tab icon uses an SVG SMIL animated vector representation of a futuri
 - **Integrity**: SHA-256 digest generated during packaging and verified prior to release publishing.
 - **CI/CD Automation**: GitHub Actions workflow (`.github/workflows/release.yml`) automatically triggers on semver tags (`v*.*.*`), runs `scripts/bundle_release.py`, and attaches the distribution archive to GitHub Releases.
 
+---
+
+## 8. D-Pad Pointer Glide Engine & Dynamic TV App Discovery
+
+### A. D-Pad Pointer Glide Architecture
+Wireless touchpad streaming over local Wi-Fi frequently experiences latency spikes and overshooting. To deliver deterministic, tactile control, cursor positioning is mapped directly to the D-Pad and keyboard arrow keys:
+- **Discrete Tap**: Dispatches an immediate 36-pixel relative step (`/mouse_rel`), providing crisp, single-element targeting without delay.
+- **Hold-to-Glide**: Engaging a hold for more than 250ms transitions into continuous gliding, dispatching 45-pixel steps every 85ms until released.
+- **Hardware Coordinate Bounding**: Coordinates are clamped to the target display boundary (`[0, 1279]`, `[0, 719]`).
+- **Tactile Selection**: Center OK, Enter, and Spacebar dispatch an immediate touch click at the exact coordinates of the virtual pointer.
+- **Hardware Wake Signaling**: Awakens the hardware cursor via raw Linux kernel input event generation (`EV_KEY 122 KEYCODE_MOVE_HOME`) sent directly to `/dev/input/eventX` alongside system touch indicators.
+
+### B. Dynamic TV App Discovery Architecture
+- **Package Enumeration**: Queries Android `cmd package query-activities` for user-launchable activities (`CATEGORY_LAUNCHER` and `CATEGORY_LEANBACK_LAUNCHER`) over ADB.
+- **Brand Identity Mapping**: Maps package identifiers (e.g. YouTube, Netflix, Prime Video, Disney+, Kodi, VLC, Plex, Spotify, Stremio, Browser, HDMI) to curated vector iconography and brand accent palettes.
+- **Dynamic Launch & Resiliency**: Dispatches single-intent execution (`monkey -p <pkg> -c android.intent.category.LAUNCHER 1`). Scanned applications are cached locally in browser storage to ensure immediate availability across sessions.
+

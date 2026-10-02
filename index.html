@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Universal Android TV & Projector Remote - Command Cockpit</title>
+<title>Universal Android TV & Projector Remote - Command Control Panel</title>
 <link id="favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='wf' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%2300f3ff'/%3E%3Cstop offset='100%25' stop-color='%2338bdf8'/%3E%3C/linearGradient%3E%3Cfilter id='glow'%3E%3CfeGaussianBlur stdDeviation='2.5' result='b'/%3E%3CfeComposite in='SourceGraphic' in2='b' operator='over'/%3E%3C/filter%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='%23090b10' stroke='%2300f3ff' stroke-width='3' stroke-opacity='0.4'/%3E%3Cpath d='M 18 34 A 45 45 0 0 1 82 34' fill='none' stroke='url(%23wf)' stroke-width='7' stroke-linecap='round' filter='url(%23glow)'%3E%3Canimate attributeName='opacity' values='0.25;1;0.25' dur='1.8s' begin='0.6s' repeatCount='indefinite'/%3E%3C/path%3E%3Cpath d='M 30 49 A 28 28 0 0 1 70 49' fill='none' stroke='url(%23wf)' stroke-width='7' stroke-linecap='round' filter='url(%23glow)'%3E%3Canimate attributeName='opacity' values='0.25;1;0.25' dur='1.8s' begin='0.3s' repeatCount='indefinite'/%3E%3C/path%3E%3Cpath d='M 41 64 A 13 13 0 0 1 59 64' fill='none' stroke='url(%23wf)' stroke-width='7' stroke-linecap='round' filter='url(%23glow)'%3E%3Canimate attributeName='opacity' values='0.3;1;0.3' dur='1.8s' begin='0s' repeatCount='indefinite'/%3E%3C/path%3E%3Ccircle cx='50' cy='78' r='6' fill='%2300f3ff' filter='url(%23glow)'%3E%3Canimate attributeName='r' values='5;7.5;5' dur='1.8s' repeatCount='indefinite'/%3E%3Canimate attributeName='opacity' values='0.6;1;0.6' dur='1.8s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/svg%3E">
 <style>
   :root {
@@ -565,105 +565,76 @@
     display: flex;
   }
 
-  /* Trackpad View */
-  .trackpad-deck {
-    height: 290px;
-    background: radial-gradient(circle at 50% 50%, #151b27, #0c0f16);
-    border: 2px dashed #2a3449;
-    border-radius: var(--radius-lg);
-    position: relative;
-    cursor: crosshair;
-    user-select: none;
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.6);
-    transition: border-color 0.2s ease;
-    touch-action: none;
-  }
-
-  .trackpad-deck:hover {
-    border-color: #3b475e;
-  }
-
-  .trackpad-deck.active-dragging {
-    border-color: var(--cinema-cyan);
-    box-shadow: inset 0 0 24px var(--cinema-cyan-glow);
-  }
-
-  .trackpad-hint {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    color: var(--text-muted);
-    font-size: 13px;
-    pointer-events: none;
-  }
-
-  .trackpad-dot {
-    position: absolute;
-    width: 22px;
-    height: 22px;
-    margin-left: -11px;
-    margin-top: -11px;
-    border-radius: 50%;
-    background: rgba(56, 189, 248, 0.35);
-    border: 2px solid var(--cinema-cyan);
-    box-shadow: 0 0 14px var(--cinema-cyan);
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-  }
-
-  .trackpad-dot.active {
-    opacity: 1;
-  }
-
-  .trackpad-clicks {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  .click-zone {
-    height: 50px;
-    background: var(--cinema-surface);
-    border: 1px solid var(--cinema-border);
-    border-radius: var(--radius-md);
-    color: var(--text-secondary);
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: var(--shadow-key);
-    transition: all 0.12s ease;
-  }
-
-  .click-zone:hover {
-    color: var(--text-primary);
-    border-color: var(--cinema-cyan);
-    background: rgba(56, 189, 248, 0.06);
-  }
-
-  .click-zone:active {
-    transform: translateY(1px);
-    background: rgba(56, 189, 248, 0.15);
-  }
-
-  /* Trackpad Tools Bar */
-  .trackpad-toolbar {
+  /* Installed TV Apps Section & Header */
+  .apps-header-bar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     flex-wrap: wrap;
+    gap: 12px;
+    background: var(--cinema-sunken);
+    border: 1px solid var(--cinema-border);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+    margin-bottom: 16px;
+  }
+
+  .apps-header-left {
+    display: flex;
+    align-items: center;
     gap: 10px;
-    padding-top: 4px;
-    border-top: 1px solid var(--cinema-border);
+  }
+
+  .apps-header-title {
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+  }
+
+  .apps-count-badge {
+    font-size: 10px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    background: rgba(56, 189, 248, 0.12);
+    color: var(--cinema-cyan);
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+  }
+
+  .app-section-divider {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin: 18px 0 10px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .app-section-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--cinema-border);
+  }
+
+  .app-card-pkg {
+    font-size: 9.5px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    margin-top: 2px;
+    max-width: 88px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    opacity: 0.75;
   }
 
   .tool-btn-group {
@@ -1697,7 +1668,7 @@
       <span class="brand-dot"></span>
       <span>CINEMA STUDIO</span>
     </div>
-    <span class="brand-title">HY300 Command Cockpit Pro</span>
+    <span class="brand-title">HY300 Command Control Panel Pro</span>
   </div>
 
   <div class="header-actions">
@@ -1856,11 +1827,7 @@
     
     <!-- Mode Switcher Tabs -->
     <nav class="stage-tab-bar">
-      <button class="stage-tab active" id="tabBtnTrackpad" onclick="switchStageTab('trackpad')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path><path d="M13 13l6 6"></path></svg>
-        <span>Trackpad & Tools</span>
-      </button>
-      <button class="stage-tab" id="tabBtnApps" onclick="switchStageTab('apps')">
+      <button class="stage-tab active" id="tabBtnApps" onclick="switchStageTab('apps')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
         <span>Apps & Launchers</span>
       </button>
@@ -1874,117 +1841,88 @@
       </button>
     </nav>
 
-    <!-- Tab 1: Trackpad View -->
-    <div class="stage-tab-content active" id="stageTrackpad">
-      <div class="trackpad-deck" id="trackpad">
-        <div class="trackpad-hint" id="trackpadHint">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path></svg>
-          <span>Freeform 2D Capacitive Trackpad Deck</span>
+    <!-- Tab 1: Apps & Launchers (Default Active Stage) -->
+    <div class="stage-tab-content active" id="stageApps">
+      <!-- Header bar with auto-sync and refresh -->
+      <div class="apps-header-bar">
+        <div class="apps-header-left">
+          <span class="apps-header-title">INSTALLED TV APPS & CHANNELS</span>
+          <span class="apps-count-badge" id="installedAppsCount">AUTO-SYNC</span>
         </div>
-        <div class="trackpad-dot trackpad-touch-cursor" id="touchCursor"></div>
-      </div>
-
-      <!-- Left & Right Clicks -->
-      <div class="trackpad-clicks">
-        <button class="click-zone" onclick="sendMouseClick()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4z"></path><path d="M8 6h4"></path></svg>
-          <span>Left Click (Select)</span>
-        </button>
-        <button class="click-zone" onclick="sendCmd('BACK', 'btnBack')">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4z"></path><path d="M12 6h4"></path></svg>
-          <span>Right Click (Back)</span>
+        <button class="hdr-btn" id="btnRefreshApps" onclick="fetchInstalledApps()" title="Query installed TV apps via ADB">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          <span>Refresh Apps</span>
         </button>
       </div>
 
-      <!-- Direct Text Search Streamer -->
-      <div class="search-stream-box">
-        <input type="text" class="search-input" id="quickTextInput" placeholder="Type query on laptop keyboard to stream into projector..." onkeydown="if(event.key==='Enter') sendStreamText();">
-        <button class="send-btn" onclick="sendStreamText()">Send Text</button>
-      </div>
-
-      <!-- Trackpad Utilities -->
-      <div class="trackpad-toolbar">
-        <div class="tool-btn-group">
-          <button class="pill-action-btn" onclick="pingCursor()">
-            <span>Wake Pointer</span>
-          </button>
-          <button class="pill-action-btn" onclick="dismissCursor()">
-            <span>Dismiss Pointer</span>
-          </button>
-        </div>
-
-        <div class="tool-btn-group">
-          <span style="font-size:11px; color:var(--text-muted);">Sensitivity:</span>
-          <button class="pill-action-btn" id="sens1" onclick="setSpeed(1.0)">1x</button>
-          <button class="pill-action-btn active" id="sens2" onclick="setSpeed(1.8)">1.8x</button>
-          <button class="pill-action-btn" id="sens3" onclick="setSpeed(2.6)">2.6x</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab 2: Apps Grid -->
-    <div class="stage-tab-content" id="stageApps">
+      <!-- Core System Launchers (AirPlay and Miracast consolidated strictly to Left Remote Deck) -->
+      <div class="app-section-divider">CORE LAUNCHERS</div>
       <div class="app-grid">
         <div class="app-card" onclick="launchApp('yt')">
-          <div class="app-icon-wrap">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
+          <div class="app-icon-wrap" style="border-color: rgba(239, 68, 68, 0.4);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>
           </div>
           <span class="app-name">YouTube</span>
+          <span class="app-card-pkg">youtube.tv</span>
         </div>
 
         <div class="app-card" onclick="launchApp('netflix')">
-          <div class="app-icon-wrap">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+          <div class="app-icon-wrap" style="border-color: rgba(229, 9, 20, 0.4);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#e50914" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
           </div>
           <span class="app-name">Netflix</span>
+          <span class="app-card-pkg">netflix.ninja</span>
         </div>
 
         <div class="app-card" onclick="launchApp('browser')">
-          <div class="app-icon-wrap">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path></svg>
+          <div class="app-icon-wrap" style="border-color: rgba(56, 189, 248, 0.4);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path></svg>
           </div>
           <span class="app-name">Browser</span>
+          <span class="app-card-pkg">android.chrome</span>
         </div>
 
         <div class="app-card" onclick="launchApp('prime')">
-          <div class="app-icon-wrap">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <div class="app-icon-wrap" style="border-color: rgba(0, 168, 225, 0.4);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#00a8e1" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           </div>
           <span class="app-name">Prime Video</span>
+          <span class="app-card-pkg">amazonvideo</span>
         </div>
 
         <div class="app-card" onclick="launchApp('hdmi')">
-          <div class="app-icon-wrap">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+          <div class="app-icon-wrap" style="border-color: rgba(245, 158, 11, 0.4);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
           </div>
           <span class="app-name">HDMI Input</span>
-        </div>
-
-        <div class="app-card" onclick="launchApp('airplay', 'btnAirplay')">
-          <div class="app-icon-wrap">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1"></path><polygon points="12 15 17 21 7 21 12 15"></polygon></svg>
-          </div>
-          <span class="app-name">AirPlay iOS</span>
-        </div>
-
-        <div class="app-card" onclick="launchApp('miracast', 'btnMiracast')">
-          <div class="app-icon-wrap">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 16.1A5 5 0 0 1 5.9 20M2 12.05A9 9 0 0 1 9.95 20M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"></path><line x1="2" y1="20" x2="2.01" y2="20"></line></svg>
-          </div>
-          <span class="app-name">Miracast Cast</span>
+          <span class="app-card-pkg">external.hdmi</span>
         </div>
 
         <div class="app-card" onclick="sendCmd('SLEEP')">
-          <div class="app-icon-wrap">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          <div class="app-icon-wrap" style="border-color: rgba(148, 163, 184, 0.4);">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
           </div>
           <span class="app-name">Screen Off</span>
+          <span class="app-card-pkg">system.standby</span>
+        </div>
+      </div>
+
+      <!-- Auto-Discovered Installed TV Packages Shelf -->
+      <div class="app-section-divider">DISCOVERED PACKAGES & CHANNELS</div>
+      <div class="app-grid" id="installedAppsGrid">
+        <div style="grid-column: 1/-1; padding: 24px; text-align: center; color: var(--text-muted); font-size: 12px; font-family: var(--font-mono);">
+          Connecting to TV package manager...
         </div>
       </div>
     </div>
 
-    <!-- Tab 3: Terminal & Macros View -->
+    <!-- Tab 2: Terminal & Macros View (Includes Direct Search Streamer) -->
     <div class="stage-tab-content" id="stageTerminal">
+      <!-- Direct Keyboard Query Streamer -->
+      <div class="search-stream-box" style="margin-bottom: 14px;">
+        <input type="text" class="search-input" id="quickTextInput" placeholder="Type query on laptop keyboard to stream into TV screen..." onkeydown="if(event.key==='Enter') sendStreamText();">
+        <button class="send-btn" onclick="sendStreamText()">Send Text</button>
+      </div>
       
       <!-- CLI Input -->
       <div class="cmd-input-bar">
@@ -2358,19 +2296,24 @@
     document.querySelectorAll('.stage-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.stage-tab-content').forEach(c => c.classList.remove('active'));
     
-    if (tabId === 'trackpad') {
-      document.getElementById('tabBtnTrackpad').classList.add('active');
-      document.getElementById('stageTrackpad').classList.add('active');
-    } else if (tabId === 'apps') {
-      document.getElementById('tabBtnApps').classList.add('active');
-      document.getElementById('stageApps').classList.add('active');
-    } else if (tabId === 'terminal') {
-      document.getElementById('tabBtnTerminal').classList.add('active');
-      document.getElementById('stageTerminal').classList.add('active');
+    if (tabId === 'terminal') {
+      const btn = document.getElementById('tabBtnTerminal');
+      const stage = document.getElementById('stageTerminal');
+      if (btn) btn.classList.add('active');
+      if (stage) stage.classList.add('active');
     } else if (tabId === 'files') {
-      document.getElementById('tabBtnFiles').classList.add('active');
-      document.getElementById('stageFiles').classList.add('active');
+      const btn = document.getElementById('tabBtnFiles');
+      const stage = document.getElementById('stageFiles');
+      if (btn) btn.classList.add('active');
+      if (stage) stage.classList.add('active');
       winInitExplorer();
+    } else {
+      // Default: apps
+      const btn = document.getElementById('tabBtnApps');
+      const stage = document.getElementById('stageApps');
+      if (btn) btn.classList.add('active');
+      if (stage) stage.classList.add('active');
+      tabId = 'apps';
     }
     localStorage.setItem('hy300_active_tab', tabId);
     playTone(480, 0.04);
@@ -2378,8 +2321,10 @@
 
   function restoreTab() {
     const saved = localStorage.getItem('hy300_active_tab');
-    if (saved && (saved === 'trackpad' || saved === 'apps' || saved === 'terminal' || saved === 'files')) {
+    if (saved && (saved === 'apps' || saved === 'terminal' || saved === 'files')) {
       switchStageTab(saved);
+    } else {
+      switchStageTab('apps');
     }
   }
 
@@ -2470,7 +2415,8 @@
   }
 
   let mouseMode = false;
-  let mouseStart = null;
+  let virtualCursorX = 640;
+  let virtualCursorY = 360;
 
   function setStatus(msg, type) {
     const bar = document.getElementById('remoteStatusBar');
@@ -2478,6 +2424,18 @@
     if (!bar || !txt) return;
     bar.className = 'remote-status-bar ' + (type || '');
     txt.textContent = msg;
+  }
+
+  function updateCursorChip() {
+    const chip = document.getElementById('remoteModeChip');
+    if (!chip) return;
+    if (mouseMode) {
+      chip.textContent = `CURSOR: ${Math.round(virtualCursorX)},${Math.round(virtualCursorY)}`;
+      chip.classList.add('mouse-active');
+    } else {
+      chip.textContent = 'GRID FOCUS';
+      chip.classList.remove('mouse-active');
+    }
   }
 
   async function toggleMouse() {
@@ -2494,21 +2452,23 @@
     if (dpadCont) dpadCont.classList.toggle('mouse-active-deck', mouseMode);
 
     if (mouseMode) {
-      chip.textContent = 'MOUSE ON';
+      updateCursorChip();
       okMain.textContent = 'TAP';
       okSub.textContent = 'CLICK';
       playTone(740, 0.08);
-      showTapFeedback('MOUSE ON', 'btnMouseToggle');
-      setStatus('Mouse mode ON', 'ok');
-      logTerminal('Mouse Mode ON (Laptop cursor, D-Pad touchpad, and screen pointer active)');
+      showTapFeedback('CURSOR MODE', 'btnMouseToggle');
+      setStatus('HOLD ARROWS TO GLIDE • OK TO TAP', 'ok');
+      logTerminal('Cursor Mode ON: Controlled via Arrow Keys / D-Pad (Tap 36px, Hold glide 45px)');
+      await postJson('/ping_cursor', {});
     } else {
       chip.textContent = 'GRID FOCUS';
       okMain.textContent = 'OK';
       okSub.textContent = 'SELECT';
       playTone(420, 0.08);
       showTapFeedback('MOUSE OFF', 'btnMouseToggle');
-      setStatus('Mouse mode OFF', 'ok');
+      setStatus('Grid navigation restored', 'ok');
       logTerminal('Grid Navigation Restored');
+      await postJson('/dismiss_cursor', {});
     }
 
     const result = await postJson('/mode', { mode: 'mouse', enabled: mouseMode });
@@ -2522,23 +2482,29 @@
     }
   }
 
-  function handleDpadAction(direction) {
+  function handleDpadAction(direction, isRepeat = false) {
     const btnMap = { 'UP': 'btnUp', 'DOWN': 'btnDown', 'LEFT': 'btnLeft', 'RIGHT': 'btnRight' };
     const btnId = btnMap[direction];
+
     if (mouseMode) {
-      const step = 45;
+      // Tap steps 36px; holding past 250ms glides 45px every 85ms
+      const step = isRepeat ? 45 : 36;
       let dx = 0, dy = 0;
       if (direction === 'UP') dy = -step;
       else if (direction === 'DOWN') dy = step;
       else if (direction === 'LEFT') dx = -step;
       else if (direction === 'RIGHT') dx = step;
-      showTapFeedback(direction, btnId);
-      setStatus('[OK] MOUSE ' + direction, 'ok');
-      const x1 = 640;
-      const y1 = 360;
-      const x2 = Math.max(0, Math.min(1279, x1 + dx));
-      const y2 = Math.max(0, Math.min(719, y1 + dy));
-      postJson('/mouse', { action: 'swipe', x1, y1, x2, y2, duration: 60 });
+
+      virtualCursorX = Math.max(0, Math.min(1279, virtualCursorX + dx));
+      virtualCursorY = Math.max(0, Math.min(719, virtualCursorY + dy));
+      updateCursorChip();
+
+      if (!isRepeat) {
+        showTapFeedback(direction, btnId);
+        setStatus(`[OK] CURSOR ${direction} (${Math.round(virtualCursorX)},${Math.round(virtualCursorY)})`, 'ok');
+      }
+
+      queueRelativeMouse(dx, dy);
     } else {
       sendCmd(direction, btnId);
     }
@@ -2547,65 +2513,15 @@
   function handleOkAction() {
     if (mouseMode) {
       showTapFeedback('CLICK', 'btnOk');
-      setStatus('[OK] CLICK', 'ok');
+      setStatus(`[OK] TAP (${Math.round(virtualCursorX)},${Math.round(virtualCursorY)})`, 'ok');
       sendMouseClick();
     } else {
       sendCmd('OK', 'btnOk');
     }
   }
 
-  // D-Pad Touch Surface when Mouse Mode is ON (v2projector.py)
-  function initDpadMouseSurface() {
-    const dpadCont = document.querySelector('.dpad-container');
-    if (!dpadCont) return;
-
-    dpadCont.addEventListener('pointerdown', (e) => {
-      if (!mouseMode) return;
-      mouseStart = { x: e.clientX, y: e.clientY, time: Date.now() };
-      dpadCont.setPointerCapture(e.pointerId);
-      e.preventDefault();
-    });
-
-    dpadCont.addEventListener('pointerup', async (e) => {
-      if (!mouseMode || !mouseStart) return;
-
-      const dx = e.clientX - mouseStart.x;
-      const dy = e.clientY - mouseStart.y;
-      const elapsed = Math.max(50, Date.now() - mouseStart.time);
-
-      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-        // Short tap is treated as click
-        const rect = dpadCont.getBoundingClientRect();
-        const x = Math.round(((e.clientX - rect.left) / rect.width) * 1280);
-        const y = Math.round(((e.clientY - rect.top) / rect.height) * 720);
-        showTapFeedback('TAP', 'btnOk');
-        setStatus('[OK] Tap (' + x + ',' + y + ')', 'ok');
-        const res = await postJson('/mouse', { action: 'tap', x, y });
-        if (!res.ok) setStatus('Mouse tap failed', 'err');
-      } else {
-        // Drag is treated as swipe
-        const scale = 8;
-        const x1 = 640;
-        const y1 = 360;
-        const x2 = Math.max(0, Math.min(1279, x1 + Math.round(dx * scale)));
-        const y2 = Math.max(0, Math.min(719, y1 + Math.round(dy * scale)));
-        showTapFeedback('MOVE');
-        setStatus('[OK] Move ' + (dx > 0 ? '+' : '') + Math.round(dx), 'ok');
-        const res = await postJson('/mouse', { action: 'swipe', x1, y1, x2, y2, duration: Math.min(1000, elapsed) });
-        if (!res.ok) setStatus('Mouse move failed', 'err');
-      }
-
-      mouseStart = null;
-      e.preventDefault();
-    });
-
-    dpadCont.addEventListener('pointercancel', () => {
-      mouseStart = null;
-    });
-  }
-
-  // Hold-to-Repeat Controller for directional keys and volume ramping
-  function setupHoldRepeat(btnId, actionFn) {
+  // Hold-to-Repeat Controller with separate tap vs. glide rates
+  function setupHoldRepeat(btnId, actionFn, repeatActionFn) {
     const el = document.getElementById(btnId);
     if (!el) return;
     let holdTimer = null;
@@ -2615,13 +2531,13 @@
       if (e.button !== undefined && e.button !== 0) return;
       el.classList.add('pressed');
 
-      // Only engage rapid repeat after holding for 380ms
-      // Initial single tap is handled independently via onclick so it is never delayed or blocked
+      // Engage repeat glide after 250ms
       holdTimer = setTimeout(() => {
         repeatInterval = setInterval(() => {
-          actionFn();
-        }, 110);
-      }, 380);
+          if (repeatActionFn) repeatActionFn();
+          else actionFn();
+        }, 85);
+      }, 250);
     }
 
     function cancelPress() {
@@ -2638,11 +2554,10 @@
 
   // Initialize Hold-to-Repeat and Power Long-Press
   function bind15Buttons() {
-    // Only rapid-repeat directional keys and volume rocker
-    setupHoldRepeat('btnUp', () => handleDpadAction('UP'));
-    setupHoldRepeat('btnDown', () => handleDpadAction('DOWN'));
-    setupHoldRepeat('btnLeft', () => handleDpadAction('LEFT'));
-    setupHoldRepeat('btnRight', () => handleDpadAction('RIGHT'));
+    setupHoldRepeat('btnUp', () => handleDpadAction('UP', false), () => handleDpadAction('UP', true));
+    setupHoldRepeat('btnDown', () => handleDpadAction('DOWN', false), () => handleDpadAction('DOWN', true));
+    setupHoldRepeat('btnLeft', () => handleDpadAction('LEFT', false), () => handleDpadAction('LEFT', true));
+    setupHoldRepeat('btnRight', () => handleDpadAction('RIGHT', false), () => handleDpadAction('RIGHT', true));
     setupHoldRepeat('btnVolDown', () => sendCmd('VOL_DOWN', 'btnVolDown'));
     setupHoldRepeat('btnVolUp', () => sendCmd('VOL_UP', 'btnVolUp'));
 
@@ -2768,76 +2683,10 @@
     }
   }
 
-  // Pointer Event Trackpad Listeners
-  const trackpad = document.getElementById('trackpad');
-  const touchCursor = document.getElementById('touchCursor');
-
-  window.addEventListener('resize', () => { cachedTrackpadRect = null; });
-  window.addEventListener('scroll', () => { cachedTrackpadRect = null; }, true);
-
-  trackpad.addEventListener('pointerdown', (e) => {
-    cachedTrackpadRect = trackpad.getBoundingClientRect();
-    tLast = { x: e.clientX, y: e.clientY };
-    pointerDownTime = Date.now();
-    pointerMovedTotal = 0;
-    trackpad.setPointerCapture(e.pointerId);
-
-    const rx = e.clientX - cachedTrackpadRect.left;
-    const ry = e.clientY - cachedTrackpadRect.top;
-    touchCursor.style.left = rx + 'px';
-    touchCursor.style.top = ry + 'px';
-    touchCursor.classList.add('active');
-    trackpad.classList.add('active-dragging');
-    e.preventDefault();
-  });
-
-  trackpad.addEventListener('pointermove', (e) => {
-    if (!tLast) return;
-    if (!cachedTrackpadRect) cachedTrackpadRect = trackpad.getBoundingClientRect();
-
-    const rx = e.clientX - cachedTrackpadRect.left;
-    const ry = e.clientY - cachedTrackpadRect.top;
-    touchCursor.style.left = rx + 'px';
-    touchCursor.style.top = ry + 'px';
-
-    const dx = (e.clientX - tLast.x) * mouseSens;
-    const dy = (e.clientY - tLast.y) * mouseSens;
-    tLast = { x: e.clientX, y: e.clientY };
-
-    pointerMovedTotal += Math.hypot(dx, dy);
-
-    if (Math.abs(dx) >= 0.2 || Math.abs(dy) >= 0.2) {
-      queueRelativeMouse(dx, dy);
-    }
-    e.preventDefault();
-  });
-
-  trackpad.addEventListener('pointerup', async (e) => {
-    const duration = Date.now() - pointerDownTime;
-    touchCursor.classList.remove('active');
-    trackpad.classList.remove('active-dragging');
-    tLast = null;
-
-    if (duration < 220 && pointerMovedTotal < 7) {
-      sendMouseClick();
-    }
-    e.preventDefault();
-  });
-
-  trackpad.addEventListener('pointercancel', () => {
-    touchCursor.classList.remove('active');
-    trackpad.classList.remove('active-dragging');
-    tLast = null;
-  });
-
-  trackpad.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const raw = e.deltaY;
-    if (Math.abs(raw) < 1) return;
-    const dir = -Math.sign(raw);
-    const mag = Math.max(1, Math.min(6, Math.round(Math.abs(raw) / 45)));
-    queueWheel(dir * mag);
-  }, { passive: false });
+  // Ultra-crisp Pointer Glide Coordinator (Laptop trackpad replaced by D-Pad Glide)
+  function initDpadMouseSurface() {
+    // No-op for touch surface; directional glide engine active
+  }
 
   // CLI & Macros
   async function executeCliCommand() {
@@ -3035,7 +2884,122 @@
     }
   }
 
-  // Global Keyboard listener
+
+  // -------------------------------------------------------------------------
+  // Dynamic Installed TV Apps Discovery Engine
+  // -------------------------------------------------------------------------
+  let cachedInstalledApps = [];
+
+  function getAppIconSvg(iconType, brandColor) {
+    const stroke = brandColor || 'currentColor';
+    switch (iconType) {
+      case 'youtube':
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>`;
+      case 'netflix':
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>`;
+      case 'prime':
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
+      case 'browser':
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
+      case 'hdmi':
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`;
+      case 'kodi':
+      case 'plex':
+      case 'vlc':
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>`;
+      case 'spotify':
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>`;
+      case 'settings':
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>`;
+      default:
+        return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>`;
+    }
+  }
+
+  async function fetchInstalledApps() {
+    const btn = document.getElementById('btnRefreshApps');
+    const countBadge = document.getElementById('installedAppsCount');
+    const container = document.getElementById('installedAppsGrid');
+    if (btn) btn.classList.add('active');
+
+    // Load from local cache first if available
+    try {
+      const cached = localStorage.getItem('tv_installed_apps');
+      if (cached && (!cachedInstalledApps || cachedInstalledApps.length === 0)) {
+        cachedInstalledApps = JSON.parse(cached);
+        renderInstalledApps(cachedInstalledApps);
+        if (countBadge) countBadge.textContent = `${cachedInstalledApps.length} APPS`;
+      }
+    } catch(e) {}
+
+    try {
+      const res = await fetch('/installed_apps');
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.apps) && data.apps.length > 0) {
+        cachedInstalledApps = data.apps;
+        localStorage.setItem('tv_installed_apps', JSON.stringify(data.apps));
+        renderInstalledApps(data.apps);
+        if (countBadge) countBadge.textContent = `${data.apps.length} APPS`;
+        logTerminal(`Installed Apps: Loaded ${data.apps.length} TV applications via ADB`);
+      } else {
+        if (countBadge && cachedInstalledApps.length > 0) {
+          countBadge.textContent = `${cachedInstalledApps.length} APPS`;
+        } else if (countBadge) {
+          countBadge.textContent = 'OFFLINE';
+        }
+      }
+    } catch(err) {
+      logTerminal('Installed apps scan: ' + err.message, true);
+    } finally {
+      if (btn) setTimeout(() => btn.classList.remove('active'), 400);
+    }
+  }
+
+  function renderInstalledApps(apps) {
+    const grid = document.getElementById('installedAppsGrid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    apps.forEach(app => {
+      const card = document.createElement('div');
+      card.className = 'app-card';
+      card.title = `${app.name} (${app.package})`;
+      card.onclick = () => launchCustomApp(app.package, app.name);
+
+      const iconWrap = document.createElement('div');
+      iconWrap.className = 'app-icon-wrap';
+      if (app.color) iconWrap.style.borderColor = app.color + '55';
+      iconWrap.innerHTML = getAppIconSvg(app.icon, app.color);
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'app-name';
+      nameSpan.textContent = app.name;
+
+      const pkgSpan = document.createElement('span');
+      pkgSpan.className = 'app-card-pkg';
+      const parts = app.package.split('.');
+      pkgSpan.textContent = parts.length > 1 ? parts.slice(-2).join('.') : app.package;
+
+      card.appendChild(iconWrap);
+      card.appendChild(nameSpan);
+      card.appendChild(pkgSpan);
+      grid.appendChild(card);
+    });
+  }
+
+  async function launchCustomApp(pkg, appName) {
+    showTapFeedback(appName || 'APP');
+    logTerminal(`LAUNCH: ${appName || pkg} [${pkg}]`);
+    const d = await postJson('/app', { app: 'custom', package: pkg });
+    if (!d.ok) {
+      logTerminal(`APP ERR: ${d.error || 'Failed to launch'}`, true);
+      showTapError('FAILED');
+    }
+  }
+
+  // Global Keyboard listener with D-Pad Glide & Shortcut Integration
+  const heldKeyMap = new Map();
+
   window.addEventListener('keydown', e => {
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
 
@@ -3063,6 +3027,41 @@
       }
     }
 
+    // Directional keys in Mouse Mode (Arrow Keys & WASD)
+    const dpadKeyMap = {
+      'ArrowUp': 'UP', 'w': 'UP', 'W': 'UP',
+      'ArrowDown': 'DOWN', 's': 'DOWN', 'S': 'DOWN',
+      'ArrowLeft': 'LEFT', 'a': 'LEFT', 'A': 'LEFT',
+      'ArrowRight': 'RIGHT', 'd': 'RIGHT', 'D': 'RIGHT'
+    };
+
+    if (mouseMode && dpadKeyMap[e.key]) {
+      e.preventDefault();
+      const dir = dpadKeyMap[e.key];
+      if (!heldKeyMap.has(e.key)) {
+        // Initial crisp 36px step
+        handleDpadAction(dir, false);
+
+        // Start smooth glide after 250ms delay
+        const tHold = setTimeout(() => {
+          const tInterval = setInterval(() => {
+            handleDpadAction(dir, true);
+          }, 85);
+          heldKeyMap.set(e.key, { timeout: null, interval: tInterval });
+        }, 250);
+
+        heldKeyMap.set(e.key, { timeout: tHold, interval: null });
+      }
+      return;
+    }
+
+    // Enter or Spacebar tap in Mouse Mode
+    if (mouseMode && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      handleOkAction();
+      return;
+    }
+
     if (activeKeyMap[e.key]) {
       e.preventDefault();
       const action = activeKeyMap[e.key];
@@ -3071,6 +3070,15 @@
       } else {
         sendCmd(action);
       }
+    }
+  });
+
+  window.addEventListener('keyup', e => {
+    if (heldKeyMap.has(e.key)) {
+      const timers = heldKeyMap.get(e.key);
+      if (timers.timeout) clearTimeout(timers.timeout);
+      if (timers.interval) clearInterval(timers.interval);
+      heldKeyMap.delete(e.key);
     }
   });
 
@@ -3911,6 +3919,7 @@
   initDpadMouseSurface();
   restoreTab();
   loadUserMacros();
+  fetchInstalledApps();
   checkStatus();
   setInterval(checkStatus, 7000);
 </script>

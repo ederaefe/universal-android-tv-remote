@@ -10,7 +10,7 @@ A high-performance, zero-install Web Remote and CLI Controller designed for **HY
 If your physical projector remote is lost, broken, or unresponsive, this tool restores complete control over local Wi-Fi using standard Android Debug Bridge (ADB). No Android rooting, no custom APK sideloading, and no external cloud services are required.
 
 <p align="center">
-  <img src="assets/preview.png" alt="Universal Android TV & Projector Remote Command Cockpit" width="100%">
+  <img src="assets/preview.png" alt="Universal Android TV & Projector Remote Command Control Panel" width="100%">
 </p>
 
 ---
@@ -18,7 +18,7 @@ If your physical projector remote is lost, broken, or unresponsive, this tool re
 ## Key Features
 
 - **Standalone Single-File Web UI (`index.html`)**: Self-contained HTML5 interface with embedded CSS and JavaScript. Zero bundlers, zero npm dependencies, and zero build steps.
-- **Mobile & Desktop Optimized**: Responsive virtual remote for smartphones and full command cockpit for desktop workstations.
+- **Mobile & Desktop Optimized**: Responsive virtual remote for smartphones and full command control panel for desktop workstations.
 - **Directional Navigation**: D-Pad (Up, Down, Left, Right, OK, Back, Home, Menu, Settings).
 - **Virtual Touchpad & Hardware Cursor**: Smooth mouse motion, tap-to-click, wheel scrolling, and hardware cursor toggle for projector pointer modes.
 - **Audio & Power Controls**: Volume up, volume down, mute toggle, and power/standby switches.
@@ -72,7 +72,7 @@ To keep this repository clean and avoid shipping untrusted binary blobs, Google'
 
 ## Quick Start Guide
 
-### Option A: Web Cockpit (Windows, Linux, macOS with Python)
+### Option A: Web Control Panel (Windows, Linux, macOS with Python)
 
 1. Clone or download this repository:
    ```bash
@@ -89,7 +89,7 @@ To keep this repository clean and avoid shipping untrusted binary blobs, Google'
      ```bash
      python3 projector.py --ip 192.168.100.5
      ```
-4. The web cockpit opens automatically at `http://127.0.0.1:7070`.
+4. The web control panel opens automatically at `http://127.0.0.1:7070`.
 
 ---
 

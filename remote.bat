@@ -39,7 +39,7 @@ if %ADB_FOUND% equ 0 (
 )
 
 :: 3. Launch Server
-echo [LAUNCH] Starting Master Remote Cockpit...
+echo [LAUNCH] Starting Master Remote Control Panel...
 python projector.py %*
 
 if %errorlevel% neq 0 (

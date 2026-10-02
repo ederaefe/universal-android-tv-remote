@@ -1,4 +1,4 @@
-"""Universal Android TV & Projector Remote - Desktop Command Cockpit
+"""Universal Android TV & Projector Remote - Desktop Command Control Panel
 High-performance, low-latency web remote with native Linux kernel sendevent streaming,
 dynamic input device discovery, hardware cursor tracking, on-screen pointer toggle,
 mouse-wheel scrolling, command terminal with history, configurable hotkeys, and desktop UI.
@@ -374,8 +374,8 @@ class AdbController:
         curr_x = int(self.cursor_x)
         curr_y = int(self.cursor_y)
 
-        # Universal Android cursor stepping: sends micro-swipe to paint and advance pointer
-        cmd = f"input mouse swipe {prev_x} {prev_y} {curr_x} {curr_y} 40 || input swipe {prev_x} {prev_y} {curr_x} {curr_y} 40"
+        # Ultra-responsive micro-swipe (20ms) to glide pointer across screen without overshoot
+        cmd = f"input mouse swipe {prev_x} {prev_y} {curr_x} {curr_y} 20 || input swipe {prev_x} {prev_y} {curr_x} {curr_y} 20"
         return self.send_shell_command(cmd, allow_fallback=True)
 
     def send_mouse_click(self):
@@ -393,25 +393,29 @@ class AdbController:
         return self.send_key(key)
 
     def toggle_remote_mouse(self):
-        """Toggles the hardware mouse arrow on the HY300 screen."""
+        """Toggles the hardware mouse arrow on the projector/TV screen."""
         if not self.physical_mouse_active:
             return self.ping_cursor()
         else:
             return self.dismiss_cursor()
 
     def ping_cursor(self):
-        """Wakes up and reveals the on-screen cursor on the HY300 display."""
+        """Wakes up and reveals the on-screen cursor on the projector display."""
         self.physical_mouse_active = True
         self.visual_touches_enabled = True
         cx = int(self.cursor_x)
         cy = int(self.cursor_y)
-        # 1. Send KEYCODE_MOVE_HOME (HY300 hardware remote mouse arrow toggle)
-        # 2. Turn on touch pointer visualizer
-        # 3. Inject a micro swipe/move to force Android WindowManager to paint the arrow cursor
+        node = self.input_device if (self.input_device and self.input_device.startswith("/dev/input/")) else "/dev/input/event7"
+        # 1. Send low-level Linux kernel sendevent on the IR node (EV_KEY 122) matching physical remote
+        # 2. Send KEYCODE_MOVE_HOME for framework compatibility
+        # 3. Enable visual touch indicator
+        # 4. Inject a crisp micro swipe to force Android WindowManager to paint the arrow cursor
         cmd = (
-            "input keyevent KEYCODE_MOVE_HOME; "
+            f"sendevent {node} 1 122 1 2>/dev/null; sendevent {node} 0 0 0 2>/dev/null; "
+            f"sendevent {node} 1 122 0 2>/dev/null; sendevent {node} 0 0 0 2>/dev/null; "
+            "input keyevent KEYCODE_MOVE_HOME 2>/dev/null; "
             "settings put system show_touches 1; "
-            f"input mouse swipe {cx} {cy} {cx + 5} {cy + 5} 50 || input swipe {cx} {cy} {cx + 5} {cy + 5} 50"
+            f"input mouse swipe {cx} {cy} {cx + 2} {cy + 2} 25 || input swipe {cx} {cy} {cx + 2} {cy + 2} 25"
         )
         return self.send_shell_command(cmd, allow_fallback=True)
 
@@ -419,8 +423,11 @@ class AdbController:
         """Hides and dismisses the on-screen mouse pointer and disables visual touches."""
         self.physical_mouse_active = False
         self.visual_touches_enabled = False
+        node = self.input_device if (self.input_device and self.input_device.startswith("/dev/input/")) else "/dev/input/event7"
         return self.send_shell_command(
-            "settings put system show_touches 0; input keyevent KEYCODE_MOVE_HOME"
+            f"sendevent {node} 1 122 1 2>/dev/null; sendevent {node} 0 0 0 2>/dev/null; "
+            f"sendevent {node} 1 122 0 2>/dev/null; sendevent {node} 0 0 0 2>/dev/null; "
+            "settings put system show_touches 0; input keyevent KEYCODE_MOVE_HOME 2>/dev/null"
         )
 
     def toggle_visual_touches(self):
@@ -900,6 +907,100 @@ class AdbController:
             return {"ok": False, "error": str(e)}
         return {"ok": False, "error": "Unknown action"}
 
+    def get_installed_apps(self):
+        """Scans the connected TV/projector for launchable Leanback and standard applications."""
+        if not self.is_connected:
+            return {"ok": False, "error": "Device offline", "apps": []}
+
+        cmd = (
+            "cmd package query-activities -c android.intent.category.LEANBACK_LAUNCHER -a android.intent.action.MAIN 2>/dev/null || "
+            "pm query-intent-activities -a android.intent.action.MAIN -c android.intent.category.LEANBACK_LAUNCHER 2>/dev/null || "
+            "cmd package query-activities -c android.intent.category.LAUNCHER -a android.intent.action.MAIN 2>/dev/null || "
+            "pm list packages -3"
+        )
+        try:
+            res = subprocess.run(
+                [self.adb_path, "-s", f"{self.target_ip}:5555", "shell", cmd],
+                capture_output=True,
+                text=True,
+                timeout=6.0,
+            )
+            raw = res.stdout or ""
+        except Exception as e:
+            return {"ok": False, "error": str(e), "apps": []}
+
+        found_packages = set()
+        for line in raw.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            match = re.search(r'(?:package:)?([a-zA-Z0-9_\.]+(?:\.[a-zA-Z0-9_]+)+)', line)
+            if match:
+                pkg = match.group(1).strip()
+                if any(pkg.startswith(p) for p in (
+                    "com.android.keyguard",
+                    "com.android.systemui",
+                    "com.android.providers",
+                    "com.android.cts",
+                    "android.overlay",
+                    "com.google.android.ext.services",
+                    "com.android.packageinstaller",
+                    "com.google.android.inputmethod"
+                )):
+                    continue
+                found_packages.add(pkg)
+
+        BRAND_MAP = {
+            "com.google.android.youtube.tv": {"name": "YouTube", "icon": "youtube", "color": "#ef4444"},
+            "com.google.android.youtube": {"name": "YouTube", "icon": "youtube", "color": "#ef4444"},
+            "com.liskovsoft.videomanager": {"name": "SmartTube", "icon": "youtube", "color": "#ef4444"},
+            "com.liskovsoft.smarttubetv.beta": {"name": "SmartTube Beta", "icon": "youtube", "color": "#ef4444"},
+            "com.netflix.ninja": {"name": "Netflix", "icon": "netflix", "color": "#e50914"},
+            "com.netflix.mediaclient": {"name": "Netflix", "icon": "netflix", "color": "#e50914"},
+            "com.amazon.amazonvideo.livingroom": {"name": "Prime Video", "icon": "prime", "color": "#00a8e1"},
+            "com.amazon.avod": {"name": "Prime Video", "icon": "prime", "color": "#00a8e1"},
+            "com.disney.disneyplus": {"name": "Disney+", "icon": "disney", "color": "#113ccf"},
+            "org.xbmc.kodi": {"name": "Kodi", "icon": "kodi", "color": "#17b2e7"},
+            "org.videolan.vlc": {"name": "VLC Player", "icon": "vlc", "color": "#ff8800"},
+            "com.plexapp.android": {"name": "Plex", "icon": "plex", "color": "#e5a00d"},
+            "com.spotify.tv.android": {"name": "Spotify", "icon": "spotify", "color": "#1ed760"},
+            "com.spotify.music": {"name": "Spotify", "icon": "spotify", "color": "#1ed760"},
+            "com.stremio.one": {"name": "Stremio", "icon": "stremio", "color": "#7f5af0"},
+            "com.android.chrome": {"name": "Chrome", "icon": "browser", "color": "#38bdf8"},
+            "com.android.browser": {"name": "Browser", "icon": "browser", "color": "#38bdf8"},
+            "com.softwinner.externalscreen": {"name": "HDMI Input", "icon": "hdmi", "color": "#f59e0b"},
+            "com.android.settings": {"name": "Settings", "icon": "settings", "color": "#94a3b8"},
+            "tv.twitch.android.app": {"name": "Twitch", "icon": "twitch", "color": "#9146ff"},
+            "com.hulu.livingroomplus": {"name": "Hulu", "icon": "hulu", "color": "#1ce783"},
+            "com.apple.atve.androidtv.appletv": {"name": "Apple TV", "icon": "appletv", "color": "#f8fafc"},
+        }
+
+        app_list = []
+        for pkg in sorted(found_packages):
+            if pkg in BRAND_MAP:
+                meta = BRAND_MAP[pkg]
+                app_list.append({
+                    "package": pkg,
+                    "name": meta["name"],
+                    "icon": meta["icon"],
+                    "color": meta["color"],
+                    "is_known": True,
+                })
+            else:
+                parts = pkg.split(".")
+                name_cand = parts[-1] if len(parts) > 1 else pkg
+                name_cand = re.sub(r'([a-z])([A-Z])', r'\1 \2', name_cand)
+                clean_name = name_cand.replace("_", " ").replace("-", " ").title()
+                app_list.append({
+                    "package": pkg,
+                    "name": clean_name,
+                    "icon": "generic",
+                    "color": "#f59e0b",
+                    "is_known": False,
+                })
+
+        return {"ok": True, "count": len(app_list), "apps": app_list}
+
 
 # Global Controller
 controller = AdbController(ADB_PATH, DEFAULT_IP)
@@ -952,7 +1053,7 @@ def physical_mouse_worker():
 
 
 # ---------------------------------------------------------------------------
-# Desktop Workstation Cockpit Interface
+# Desktop Workstation Control Panel Interface
 # ---------------------------------------------------------------------------
 def load_html_page():
     """Dynamically loads index.html from disk for instant live updates. Falls back to minimal error page if missing."""
@@ -1044,6 +1145,8 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
         elif path_only == "/files":
             target = query.get("path", ["/sdcard"])[0]
             self._json(controller.list_files(target))
+        elif path_only == "/installed_apps":
+            self._json(controller.get_installed_apps())
         elif path_only == "/download":
             target = query.get("path", [""])[0]
             if not target:
@@ -1154,11 +1257,11 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
             dx = body.get("dx", 0)
             dy = body.get("dy", 0)
             ok = controller.send_relative_mouse(dx, dy)
-            self._json({"ok": ok})
+            self._json({"ok": ok, "x": controller.cursor_x, "y": controller.cursor_y})
 
         elif path_only == "/mouse_click":
             ok = controller.send_mouse_click()
-            self._json({"ok": ok})
+            self._json({"ok": ok, "x": controller.cursor_x, "y": controller.cursor_y})
 
         elif path_only == "/mouse_wheel":
             delta = body.get("delta", 0)
@@ -1167,15 +1270,15 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
 
         elif path_only == "/cursor_toggle":
             ok = controller.toggle_remote_mouse()
-            self._json({"ok": ok})
+            self._json({"ok": ok, "active": controller.physical_mouse_active, "x": controller.cursor_x, "y": controller.cursor_y})
 
         elif path_only == "/ping_cursor":
             ok = controller.ping_cursor()
-            self._json({"ok": ok})
+            self._json({"ok": ok, "active": controller.physical_mouse_active, "x": controller.cursor_x, "y": controller.cursor_y})
 
         elif path_only == "/dismiss_cursor":
             ok = controller.dismiss_cursor()
-            self._json({"ok": ok})
+            self._json({"ok": ok, "active": False, "x": controller.cursor_x, "y": controller.cursor_y})
 
         elif path_only == "/touches_toggle":
             ok = controller.toggle_visual_touches()
@@ -1267,7 +1370,7 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
 # Server Launcher
 # ---------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(description="Universal Android TV & Projector Remote - Command Cockpit")
+    parser = argparse.ArgumentParser(description="Universal Android TV & Projector Remote - Command Control Panel")
     parser.add_argument("--ip", default=DEFAULT_IP, help="Target device IP")
     parser.add_argument("--port", type=int, default=DEFAULT_PORT, help="Web server port")
     parser.add_argument("--no-scan", action="store_true", help="Skip startup subnet scan")
@@ -1277,7 +1380,7 @@ def main():
     target_ip = args.ip
 
     print("=" * 60)
-    print("  Universal Android TV & Projector Remote - Cockpit Pro")
+    print("  Universal Android TV & Projector Remote - Control Panel Pro")
     print(f"  Local ADB Path : {ADB_PATH}")
     print(f"  Initial Target : {target_ip}:5555")
     print("=" * 60)
