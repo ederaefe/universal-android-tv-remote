@@ -36,17 +36,17 @@ Before connecting over the network, enable Developer Options and Network Debuggi
 1. Clone or download this repository:
    ```bash
    git clone https://github.com/ederaefe/universal-android-tv-remote.git
-   cd universal-android-tv-remote
+   cd /universal-android-tv-remote
    ```
 2. Place `adb.exe` (or `adb` on Linux/macOS) in the folder, or ensure `adb` is in your system PATH.
 3. Start the server:
    - **Windows**: Double-click `remote.bat` or run:
      ```cmd
-     python projector.py --ip 192.168.100.5
+     python projector.py
      ```
    - **Linux / macOS**:
      ```bash
-     python3 projector.py --ip 192.168.100.5
+     python3 projector.py 
      ```
 4. The web control panel opens automatically at `http://127.0.0.1:7070`.
 
