@@ -15,6 +15,70 @@ If your physical projector remote is lost, broken, or unresponsive, this tool re
 
 ---
 
+## Quick Start Guide
+
+### Enabling ADB on Your Projector / Android TV
+
+Before connecting over the network, enable Developer Options and Network Debugging:
+
+1. On your projector or TV, navigate to **Settings > About Device**.
+2. Locate **Build Number** and click it **7 times** until a prompt confirms "You are now a developer".
+3. Return to **Settings > Developer Options** (or **Preferences**).
+4. Enable **USB Debugging**.
+5. Enable **Network Debugging** / **Wireless Debugging** (if present as a separate toggle).
+6. Find your projector's local IP under **Settings > Network & Internet > Connected Wi-Fi > Status Information**.
+7. If your device displays a prompt stating **"Allow USB Debugging from this computer?"**, check **"Always allow from this computer"** and select **OK**.
+
+---
+
+### Option A: Web Control Panel (Windows, Linux, macOS with Python)
+
+1. Clone or download this repository:
+   ```bash
+   git clone https://github.com/ederaefe/universal-android-tv-remote.git
+   cd universal-android-tv-remote
+   ```
+2. Place `adb.exe` (or `adb` on Linux/macOS) in the folder, or ensure `adb` is in your system PATH.
+3. Start the server:
+   - **Windows**: Double-click `remote.bat` or run:
+     ```cmd
+     python projector.py --ip 192.168.100.5
+     ```
+   - **Linux / macOS**:
+     ```bash
+     python3 projector.py --ip 192.168.100.5
+     ```
+4. The web control panel opens automatically at `http://127.0.0.1:7070`.
+
+---
+
+### Option B: Terminal Remote (`remote.sh` for Linux, macOS & BSD)
+
+For lightweight environments without Python:
+1. Make the script executable:
+   ```bash
+   chmod +x remote.sh
+   ```
+2. Run with your device IP:
+   ```bash
+   ./remote.sh 192.168.100.5
+   ```
+3. Control navigation directly using keyboard keys:
+   - **Arrows / WASD**: D-Pad navigation
+   - **Enter / Space**: OK / Select
+   - **Esc / Backspace**: Back
+   - **H**: Home
+   - **M**: Menu
+   - **O**: Settings
+   - **+ / -**: Volume Up / Down
+   - **X**: Mute
+   - **P**: Power Toggle
+   - **T**: Send text prompt
+   - **Q**: Quit
+
+---
+---
+
 ## Key Features
 
 - **Standalone Single-File Web UI (`index.html`)**: Self-contained HTML5 interface with embedded CSS and JavaScript. Zero bundlers, zero npm dependencies, and zero build steps.
@@ -70,68 +134,6 @@ To keep this repository clean and avoid shipping untrusted binary blobs, Google'
 
 ---
 
-## Quick Start Guide
-
-### Option A: Web Control Panel (Windows, Linux, macOS with Python)
-
-1. Clone or download this repository:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/universal-android-tv-remote.git
-   cd universal-android-tv-remote
-   ```
-2. Place `adb.exe` (or `adb` on Linux/macOS) in the folder, or ensure `adb` is in your system PATH.
-3. Start the server:
-   - **Windows**: Double-click `remote.bat` or run:
-     ```cmd
-     python projector.py --ip 192.168.100.5
-     ```
-   - **Linux / macOS**:
-     ```bash
-     python3 projector.py --ip 192.168.100.5
-     ```
-4. The web control panel opens automatically at `http://127.0.0.1:7070`.
-
----
-
-### Option B: Terminal Remote (`remote.sh` for Linux, macOS & BSD)
-
-For lightweight environments without Python:
-1. Make the script executable:
-   ```bash
-   chmod +x remote.sh
-   ```
-2. Run with your device IP:
-   ```bash
-   ./remote.sh 192.168.100.5
-   ```
-3. Control navigation directly using keyboard keys:
-   - **Arrows / WASD**: D-Pad navigation
-   - **Enter / Space**: OK / Select
-   - **Esc / Backspace**: Back
-   - **H**: Home
-   - **M**: Menu
-   - **O**: Settings
-   - **+ / -**: Volume Up / Down
-   - **X**: Mute
-   - **P**: Power Toggle
-   - **T**: Send text prompt
-   - **Q**: Quit
-
----
-
-## Enabling ADB on Your Projector / Android TV
-
-Before connecting over the network, enable Developer Options and Network Debugging:
-
-1. On your projector or TV, navigate to **Settings > About Device**.
-2. Locate **Build Number** and click it **7 times** until a prompt confirms "You are now a developer".
-3. Return to **Settings > Developer Options** (or **Preferences**).
-4. Enable **USB Debugging**.
-5. Enable **Network Debugging** / **Wireless Debugging** (if present as a separate toggle).
-6. Find your projector's local IP under **Settings > Network & Internet > Connected Wi-Fi > Status Information**.
-7. If your device displays a prompt stating **"Allow USB Debugging from this computer?"**, check **"Always allow from this computer"** and select **OK**.
-
----
 
 ## Project Structure
 
