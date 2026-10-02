@@ -21,6 +21,7 @@ RELEASE_FILES = [
     "README.md",
     "LICENSE",
     "documentation.md",
+    "assets/preview.png",
 ]
 
 
