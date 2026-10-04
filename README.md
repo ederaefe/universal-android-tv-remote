@@ -52,13 +52,17 @@ Downloads\platform-tools-latest-windows\platform-tools
 3. Start the server:
    - **Windows**: Double-click `remote.bat` or run:
      ```cmd
-     python projector.py
+     python remote.py
      ```
    - **Linux / macOS**:
      ```bash
-     python3 projector.py 
+     python3 remote.py 
      ```
 4. The web control panel opens automatically at `http://127.0.0.1:7070`.
+5. *(Optional)* Install Scrcpy for 60 FPS Ultra-Low Latency Live Mirroring:
+   ```cmd
+   python scripts/install_scrcpy.py
+   ```
 
 ---
 
@@ -91,10 +95,14 @@ For lightweight environments without Python:
 
 ## Key Features
 
+- **60 FPS Ultra-Low Latency Live Mirror (Scrcpy v4.1)**: Real-time hardware-accelerated H.264 screen mirroring with sub-50ms latency and full mouse/keyboard pass-through, launchable directly from the web studio.
+- **Hard Connection Power-Cycle Reset**: Single-tap network reset on the studio Refresh button that drops stale ADB pipes, flushes OS socket tables, reconnects, and auto-discovers projector IP changes across local subnets.
 - **Standalone Single-File Web UI (`index.html`)**: Self-contained HTML5 interface with embedded CSS and JavaScript. Zero bundlers, zero npm dependencies, and zero build steps.
 - **Mobile & Desktop Optimized**: Responsive virtual remote for smartphones and full command control panel for desktop workstations.
-- **Directional Navigation**: D-Pad (Up, Down, Left, Right, OK, Back, Home, Menu, Settings).
+- **Directional Navigation**: D-Pad (Up, Down, Left, Right, OK, Back, Home, Menu, Settings) over persistent ADB shell pipes for sub-10ms response.
 - **Virtual Touchpad & Hardware Cursor**: Smooth mouse motion, tap-to-click, wheel scrolling, and hardware cursor toggle for projector pointer modes.
+- **Core Launchers with Deep-Linking (`⋮`)**: Top-right kebab action menus on YouTube and Browser cards for 1-click video link casting, direct search, and URL opening.
+- **Ambient Floating Command Stream Overlay**: Live, non-distracting pill stream of in-flight commands with an instant cancellation purge button.
 - **Audio & Power Controls**: Volume up, volume down, mute toggle, and power/standby switches.
 - **Instant Keyboard Text Injection**: Stream text strings directly into Android search bars and login inputs without on-screen keyboard typing fatigue.
 - **App Shortcuts**: 1-click launchers for YouTube, Netflix, Prime Video, Browser, HDMI Source Switcher, Settings, and Cast/Miracast.
@@ -149,9 +157,13 @@ To keep this repository clean and avoid shipping untrusted binary blobs, Google'
 
 ```
 ├── index.html              # Standalone web remote (inline CSS/JS, 0 dependencies)
-├── projector.py            # Lean Python HTTP server & ADB controller
+├── remote.py               # Lean Python HTTP server & ADB controller
 ├── remote.sh               # POSIX/Bash interactive terminal remote
 ├── remote.bat              # Windows environment validator and launcher
+├── scripts/
+│   ├── install_scrcpy.py   # Downloader and extractor for portable Scrcpy v4.1
+│   └── bundle_release.py   # Production release archiver and packaging utility
+├── bin/scrcpy/             # Local Genymobile Scrcpy v4.1 binaries (git-ignored)
 ├── .gitignore              # Ignores platform-tools binaries and temporary logs
 ├── LICENSE                 # MIT License
 ├── README.md               # User guide and SEO reference
@@ -170,6 +182,9 @@ The local server exposes standard JSON endpoints:
 - `POST /text`: Stream text input (`{"text": "Search Title"}`)
 - `POST /app`: Launch app package (`{"app": "youtube"}`)
 - `POST /connect`: Connect to target IP (`{"ip": "192.168.1.100"}`)
+- `POST /launch_scrcpy`: Launch native 60 FPS hardware mirror window
+- `POST /stop_scrcpy`: Terminate active 60 FPS hardware mirror
+- `GET /scrcpy_status`: Query mirror process status
 - `GET /status`: Query connection status and active input nodes
 
 ---

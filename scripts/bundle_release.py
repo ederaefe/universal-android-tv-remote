@@ -15,7 +15,7 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 RELEASE_FILES = [
     "index.html",
-    "projector.py",
+    "remote.py",
     "remote.sh",
     "remote.bat",
     "README.md",

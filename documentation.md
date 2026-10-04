@@ -19,7 +19,7 @@ The system provides low-latency, root-free control of Android TV devices, smart 
                                   v
 +-----------------------------------------------------------------------+
 |                            Server Bridge                              |
-|  - Python daemon (projector.py)                                       |
+|  - Python daemon (remote.py)                                          |
 |  - Subnet Auto-Discovery Engine (Port 5555 TCP sweep)                 |
 |  - Persistent ADB Shell Process Pipe (FIFO / Non-blocking)            |
 |  - Win32 Hardware Cursor Worker (CTypes GetCursorPos)                 |
@@ -82,7 +82,7 @@ To eliminate manual IP configuration for non-technical users:
 
 ## 4. HTTP API Contract
 
-The Python server (`projector.py`) exposes a lightweight JSON API consumed by `index.html`:
+The Python server (`remote.py`) exposes a lightweight JSON API consumed by `index.html`:
 
 | Method | Endpoint | Payload | Description |
 | :--- | :--- | :--- | :--- |
@@ -205,7 +205,7 @@ On some firmware states the two calls in quick succession caused KEY 232 to puls
 The `/mode` endpoint is now the single authoritative owner of the cursor lifecycle:
 
 ```python
-# projector.py — /mode handler
+# remote.py — /mode handler
 if enabled:
     controller.physical_mouse_active = True
     controller.ping_cursor()     # KEY 232 + relative nudge → cursor ON
@@ -232,7 +232,7 @@ Every button press went through three blocking layers:
 
 ### Optimisations Applied
 
-#### Backend — `projector.py`
+#### Backend — `remote.py`
 `send_shell_command()` now routes **all calls** through the persistent `adb shell` stdin pipe first:
 
 ```
@@ -258,3 +258,108 @@ fetch('/cmd', { method: 'POST', ..., keepalive: true })
 ```
 
 **Net result:** Perceived button latency drops from ~80–120ms to **< 5ms** on screen, with the ADB command reaching Android in ~1–3ms after button press.
+
+## 13. Core Launchers Deep Linking & Cascading Intent Architecture
+
+### Overview
+To allow immediate casting of YouTube videos, Shorts, live streams, and Chrome web URLs without navigating on-screen menus with the remote, the Core Launchers section incorporates interactive 3-button launcher cards for YouTube and Browser.
+
+### Intent Dispatch Flow
+The `/deeplink` endpoint processes payloads containing a URL or query string, an application target (`youtube` or `chrome`), and an action mode (`video`, `url`, or `search`):
+
+1. **Input Sanitization**:
+   All incoming strings are stripped of shell control characters (`&`, `;`, `|`, `$`, `` ` ``, `"`, `'`, `\`, and non-printable bytes) to prevent command injection.
+
+2. **YouTube Video ID Parsing**:
+   Regex pattern extraction isolates standard 11-character video IDs from YouTube URLs, Shorts links, and direct IDs:
+   - `https://youtu.be/<ID>`
+   - `https://www.youtube.com/watch?v=<ID>`
+   - `https://www.youtube.com/shorts/<ID>`
+   - `https://www.youtube.com/embed/<ID>`
+
+3. **Multi-Package Intent Cascade**:
+   Android TV environments may use official YouTube TV, SmartTube, or standard YouTube. Dispatches cascade across packages until accepted:
+   ```bash
+   am start -a android.intent.action.VIEW -d 'https://www.youtube.com/watch?v=<ID>' com.google.android.youtube.tv 2>/dev/null || \
+   am start -a android.intent.action.VIEW -d 'https://www.youtube.com/watch?v=<ID>' com.liskovsoft.videomanager 2>/dev/null || \
+   am start -a android.intent.action.VIEW -d 'https://www.youtube.com/watch?v=<ID>' com.google.android.youtube 2>/dev/null || \
+   am start -a android.intent.action.VIEW -d 'https://www.youtube.com/watch?v=<ID>'
+   ```
+
+4. **Chrome & Web Browser Cascade**:
+   Ensures `https://` protocol prefix and dispatches to Google Chrome, stock Android browser, or default intent handler:
+   ```bash
+   am start -a android.intent.action.VIEW -d '<URL>' com.android.chrome 2>/dev/null || \
+   am start -a android.intent.action.VIEW -d '<URL>' com.android.browser 2>/dev/null || \
+   am start -a android.intent.action.VIEW -d '<URL>'
+   ```
+
+## 14. UI Refresh Control and Environment Harmonization
+
+### UI Refresh Control
+The studio header contains an instant Refresh button (`#btnRefreshUi`) that concurrently queries:
+- ADB connection state and device properties (`GET /status`).
+- Pinned applications and catalog (`GET /installed_apps`).
+- Storage volumes and disk usage (`GET /storage`).
+- Live monitor frame capture when active (`GET /screenshot`).
+
+### Environment Harmonization
+The main server binary is consolidated into [remote.py](file:///c:/Users/USER/Downloads/platform-tools-latest-windows/platform-tools/remote.py). Legacy references to `projector.py` have been purged, and [remote.bat](file:///c:/Users/USER/Downloads/platform-tools-latest-windows/platform-tools/remote.bat) directly executes `remote.py`.
+
+## 15. Ambient Queue Stream Overlay and Kebab Action Consoles
+
+### Kebab Action Architecture in Core Launchers
+To maintain a clean grid interface while providing rich deep-linking options, the YouTube and Browser launcher cards feature a dual-interaction pattern:
+- **Card Body Click**: Directly invokes the default application launcher (`launchApp('yt')` or `launchApp('browser')`).
+- **Top-Right Kebab Menu Button (`⋮`)**: Opens an ambient floating menu (`.kebab-dropdown`) with dedicated sub-actions:
+  - **YouTube**: Launch YouTube TV, Paste Video Link (supporting standard URLs, Shorts, and video IDs), or Search Videos.
+  - **Browser**: Launch Browser, Paste Web URL (auto-normalizing protocol), or Google Search.
+- **Micro-Interactions**: Closes automatically when clicking any menu option or clicking outside the card boundary.
+
+### Ambient Floating Queue Notification Overlay
+Docked adjacent to the 15-button Physical Remote Deck (`.remote-console`), the queue overlay provides real-time ambient visibility into command dispatch:
+- **Zero-Distraction In-Flight Stream**: Displays micro-animated pills (`.queue-pill-item`) showing commands sent (e.g., `UP`, `OK`, `VOL+`, `HOME`) with state indicators (`SENT`, `ACK`, `PURGED`, `ERR`).
+- **Ambient Lifecycle**: When idle, the overlay automatically fades out (`opacity: 0; pointer-events: none`). As soon as a button is pressed or key triggered, it smoothly transitions into view.
+- **Inline Emergency Purge**: Includes an immediate `Cancel` button invoking `/clear_queue`. Clicking this sends a POSIX interrupt (`\x03\n`) to the persistent ADB shell process, purging any active navigation buffer without requiring the user to hit keyboard Escape.
+
+## 16. Hard Connection Power-Cycle Reset & Live Feed Stream Resilience
+
+### Hard Connection Reset Architecture (`/reset_connection`)
+To address Android TV Wi-Fi sleep stalls where TCP sockets appear open but ADB pipes hang, the UI **Refresh** button now executes a full network power-cycle:
+1. **Pipe Teardown**: Closes and cleans up the active persistent ADB shell process.
+2. **Network Bridge Disconnect**: Dispatches `adb disconnect {target_ip}:5555` and pauses 300ms to allow operating system socket tables to flush.
+3. **Clean Reconnect**: Issues a fresh `adb connect {target_ip}:5555` with a 5-second timeout.
+4. **Subnet Auto-Discovery Fallback**: If the primary IP fails to connect (e.g., router DHCP reassigned the projector IP), the server scans the local `/24` subnet on port 5555. Upon detecting an active ADB device, it automatically re-binds to the newly discovered IP without manual configuration.
+5. **Hardware Re-Initialization**: Re-scans `/proc/bus/input/devices`, spawns a clean persistent shell pipe, and enforces `settings put system show_touches 0`.
+
+### Live Feed Stream Resilience
+On Windows, standard `adb exec-out screencap -p` streams are vulnerable to console CRLF translation injecting `\r` (0x0D) before newline bytes (0x0A) within binary compressed PNG chunks. The capture engine now implements:
+- **Auto-Wake Reconnect**: Proactively attempts re-connection if the link dropped before attempting screen capture.
+- **Header Normalization**: Locates `\x89PNG` binary signature and normalizes corrupted `\r\r\n` and `\r\n` byte sequences back to clean POSIX newlines.
+- **Graceful Client Fallback**: Attaches `onerror` handlers to the browser image object to prevent object URL memory leaks and interface freezes during network hiccups.
+- **Hardware-Aware Timeout**: Expanded screencap subprocess timeout to 8.0 seconds and client retry threshold to 5 attempts to accommodate software PNG encoding times over Wi-Fi on budget Android TV hardware.
+
+### Single Server Standardization
+`remote.py` is the single, authoritative server file for the project. `projector.py` is permanently removed, and `remote.bat` directly starts `remote.py`.
+
+---
+
+## 17. High-Framerate Hardware Live Mirroring (Scrcpy v4.1 Integration)
+
+### Architecture
+To overcome low-framerate software PNG encoding on budget Android TV processors (where `screencap -p` is CPU-bound to ~4s per frame), the studio integrates Genymobile Scrcpy v4.1:
+1. **Target Runtime Binding**: Pushes the compiled `scrcpy-server` agent to Android 11's internal ART runtime (`/data/local/tmp/scrcpy-server`).
+2. **GPU Video Pipeline**: Connects directly to the Allwinner H713 GPU's hardware video encoder (`android.media.MediaCodec`), encoding frames into a continuous H.264 video stream.
+3. **Sub-50ms Transport**: Streams video over the active ADB TCP link (`192.168.100.5:5555`) with full hardware acceleration on the host PC (SDL3 + FFmpeg `libavcodec`).
+4. **Input Pass-Through**: Provides full real-time mouse, touchpad, and keyboard navigation directly inside the native mirror window.
+
+### API Contract
+| Method | Endpoint | Payload | Description |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/launch_scrcpy` | `{ max_fps: 60, bit_rate: "4M", max_size: 1280 }` | Spawns a detached native Scrcpy 60 FPS mirror window. |
+| `POST` | `/stop_scrcpy` | `{}` | Gracefully terminates active mirror session. |
+| `GET` | `/scrcpy_status` | None | Returns `{ available: bool, running: bool, pid: int, target: str }`. |
+
+
+
+

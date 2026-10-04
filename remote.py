@@ -189,6 +189,7 @@ class AdbController:
         self.cursor_x = PROJECTOR_WIDTH // 2
         self.cursor_y = PROJECTOR_HEIGHT // 2
         self.mouse_worker_in_flight = False
+        self.scrcpy_proc = None
 
     def connect(self, target_ip=None):
         if target_ip:
@@ -213,6 +214,70 @@ class AdbController:
             # Ensure touch cursor circle is OFF on connect
             self.send_shell_command("settings put system show_touches 0")
         return self.is_connected
+
+    def hard_reset_connection(self, target_ip=None):
+        """Hard connection reset (equivalent to toggling Wi-Fi off and on).
+        Kills stuck shell pipes, purges queues, resets ADB connection,
+        and cleanly re-establishes the bridge with fresh hardware discovery.
+        """
+        if target_ip:
+            self.target_ip = target_ip
+
+        # 1. Terminate and cleanup existing shell process
+        self.close_shell()
+
+        # 2. Reset ADB network connection
+        try:
+            subprocess.run([self.adb_path, "disconnect", f"{self.target_ip}:5555"], capture_output=True, timeout=3)
+        except Exception:
+            pass
+
+        # 3. Connect cleanly with a fresh timeout
+        time.sleep(0.3)
+        try:
+            res = subprocess.run(
+                [self.adb_path, "connect", f"{self.target_ip}:5555"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            out = (res.stdout + res.stderr).lower()
+            self.is_connected = "connected" in out or "already" in out
+        except Exception:
+            self.is_connected = False
+
+        # 4. If primary IP failed, try quick auto-discovery scan on the local subnet
+        if not self.is_connected:
+            try:
+                found_ips = scan_subnet_for_adb()
+                if found_ips:
+                    alt_ip = found_ips[0]
+                    res = subprocess.run(
+                        [self.adb_path, "connect", f"{alt_ip}:5555"],
+                        capture_output=True,
+                        text=True,
+                        timeout=4,
+                    )
+                    out = (res.stdout + res.stderr).lower()
+                    if "connected" in out or "already" in out:
+                        self.target_ip = alt_ip
+                        self.is_connected = True
+            except Exception:
+                pass
+
+        # 5. On connection: rediscover input nodes, spawn fresh shell pipe, and disable touch cursor
+        if self.is_connected:
+            self._detect_input_devices()
+            self._spawn_shell()
+            self.send_shell_command("settings put system show_touches 0")
+
+        return {
+            "ok": True,
+            "connected": self.is_connected,
+            "ip": self.target_ip,
+            "devices": getattr(self, "detected_devices", []),
+            "input_device": self.input_device
+        }
 
     def _detect_input_devices(self):
         """Scans /proc/bus/input/devices, prioritizing IR handlers for keys and pointer handlers for mouse."""
@@ -424,22 +489,30 @@ class AdbController:
     def capture_screenshot(self):
         """Captures on-screen display via adb exec-out screencap -p in memory.
         If Pillow is installed, transcode to WebP (quality=75) for 88% bandwidth reduction.
+        Auto-reconnects if connection is momentarily dropped.
         Returns: tuple (image_bytes, content_type)
         """
         if not self.is_connected:
-            return None, "image/png"
+            self.connect()
+            if not self.is_connected:
+                return None, "image/png"
         try:
             res = subprocess.run(
                 [self.adb_path, "-s", f"{self.target_ip}:5555", "exec-out", "screencap", "-p"],
                 capture_output=True,
-                timeout=4.5
+                timeout=8.0
             )
             data = res.stdout
             if not data or len(data) < 100:
                 return None, "image/png"
 
-            # Fix potential Windows CRLF byte injection in binary ADB stream if header is split
-            if data[:4] != b"\x89PNG" and b"\x89PNG" in data[:16]:
+            # Robust PNG signature detection and Windows CRLF corruption normalization
+            png_idx = data.find(b"\x89PNG")
+            if png_idx > 0:
+                data = data[png_idx:]
+
+            # If Windows stdout injected \r before \n inside PNG bytes:
+            if len(data) > 8 and data[:8] != b"\x89PNG\r\n\x1a\n":
                 data = data.replace(b"\r\r\n", b"\n").replace(b"\r\n", b"\n")
 
             try:
@@ -453,6 +526,76 @@ class AdbController:
                 return data, "image/png"
         except Exception:
             return None, "image/png"
+
+    def get_scrcpy_path(self):
+        candidates = [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "bin", "scrcpy", "scrcpy.exe"),
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "scrcpy.exe"),
+        ]
+        for p in candidates:
+            if os.path.exists(p):
+                return p
+        return shutil.which("scrcpy")
+
+    def is_scrcpy_running(self):
+        if hasattr(self, "scrcpy_proc") and self.scrcpy_proc:
+            if self.scrcpy_proc.poll() is None:
+                return True
+        return False
+
+    def get_scrcpy_status(self):
+        exe_path = self.get_scrcpy_path()
+        running = self.is_scrcpy_running()
+        pid = self.scrcpy_proc.pid if running else None
+        return {
+            "available": bool(exe_path),
+            "running": running,
+            "pid": pid,
+            "target": self.target_ip,
+        }
+
+    def launch_scrcpy(self, max_fps=60, bit_rate="4M", max_size=1280, audio=False):
+        scrcpy_exe = self.get_scrcpy_path()
+        if not scrcpy_exe:
+            return {"ok": False, "error": "scrcpy.exe not found in bin/scrcpy"}
+
+        if self.is_scrcpy_running():
+            return {"ok": True, "already_running": True, "pid": self.scrcpy_proc.pid, "target": self.target_ip}
+
+        cmd = [
+            scrcpy_exe,
+            "-s", f"{self.target_ip}:5555",
+            f"--max-size={max_size}",
+            f"--video-bit-rate={bit_rate}",
+            f"--max-fps={max_fps}",
+            f"--window-title=HY300 Projector - 60 FPS Live Mirror ({self.target_ip})",
+        ]
+        if not audio:
+            cmd.append("--no-audio")
+
+        try:
+            creationflags = 0
+            if os.name == "nt":
+                creationflags = subprocess.CREATE_NEW_PROCESS_GROUP
+
+            self.scrcpy_proc = subprocess.Popen(
+                cmd,
+                cwd=os.path.dirname(scrcpy_exe),
+                creationflags=creationflags
+            )
+            return {"ok": True, "pid": self.scrcpy_proc.pid, "target": self.target_ip}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def stop_scrcpy(self):
+        if hasattr(self, "scrcpy_proc") and self.scrcpy_proc:
+            try:
+                self.scrcpy_proc.terminate()
+                self.scrcpy_proc = None
+                return {"ok": True, "stopped": True}
+            except Exception as e:
+                return {"ok": False, "error": str(e)}
+        return {"ok": True, "stopped": False, "message": "Not running"}
 
     def toggle_visual_touches(self):
         self.visual_touches_enabled = not self.visual_touches_enabled
@@ -472,6 +615,85 @@ class AdbController:
             if i < len(words) - 1:
                 self.send_shell_command("input keyevent KEYCODE_SPACE", allow_fallback=True)
         return True
+
+    def open_deeplink(self, raw_input, target="auto", action_type="auto"):
+        """Dispatches deep link or search query to YouTube or Browser using cascading ADB intents."""
+        if not raw_input or not str(raw_input).strip():
+            return {"ok": False, "error": "Empty input"}
+
+        # Sanitize input against shell injection
+        safe = re.sub(r'[\x00-\x1f`$"\\;|<>&]', '', str(raw_input).strip())
+        target_mode = (target or "auto").lower().strip()
+        action_mode = (action_type or "auto").lower().strip()
+
+        # Determine target if set to auto
+        is_youtube = target_mode in ("youtube", "yt") or (
+            target_mode == "auto" and (
+                "youtu.be" in safe.lower() or 
+                "youtube.com" in safe.lower() or 
+                re.match(r'^[a-zA-Z0-9_-]{11}$', safe)
+            )
+        )
+
+        if is_youtube:
+            # YouTube Search Mode
+            if action_mode == "search" or (not safe.startswith("http") and len(safe) != 11 and " " in safe):
+                encoded = urllib.parse.quote(safe)
+                cmd = (
+                    f"am start -a android.intent.action.SEARCH -q '{safe}' com.google.android.youtube.tv 2>/dev/null || "
+                    f"am start -a android.intent.action.VIEW -d 'https://www.youtube.com/results?search_query={encoded}' com.google.android.youtube.tv 2>/dev/null || "
+                    f"am start -a android.intent.action.VIEW -d 'https://www.youtube.com/results?search_query={encoded}' com.liskovsoft.videomanager 2>/dev/null || "
+                    f"am start -a android.intent.action.VIEW -d 'https://www.youtube.com/results?search_query={encoded}'"
+                )
+                ok = self.send_shell_command(cmd, allow_fallback=True)
+                return {"ok": ok, "target": "youtube", "action": "search", "query": safe}
+
+            # YouTube Video / Direct Link Mode
+            video_id = None
+            patterns = [
+                r'(?:https?:\/\/)?(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})',
+                r'(?:https?:\/\/)?(?:www\.)?youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/)([a-zA-Z0-9_-]{11})',
+                r'^([a-zA-Z0-9_-]{11})$'
+            ]
+            for p in patterns:
+                m = re.search(p, safe)
+                if m:
+                    video_id = m.group(1)
+                    break
+
+            if video_id:
+                url = f"https://www.youtube.com/watch?v={video_id}"
+            else:
+                url = safe if safe.startswith("http") else f"https://www.youtube.com/watch?v={safe}"
+
+            # Cascade across YouTube TV -> SmartTube -> YouTube Mobile -> Generic VIEW
+            cmd = (
+                f"am start -a android.intent.action.VIEW -d '{url}' com.google.android.youtube.tv 2>/dev/null || "
+                f"am start -a android.intent.action.VIEW -d '{url}' com.liskovsoft.videomanager 2>/dev/null || "
+                f"am start -a android.intent.action.VIEW -d '{url}' com.google.android.youtube 2>/dev/null || "
+                f"am start -a android.intent.action.VIEW -d '{url}'"
+            )
+            ok = self.send_shell_command(cmd, allow_fallback=True)
+            return {"ok": ok, "target": "youtube", "action": "video", "url": url, "video_id": video_id}
+
+        # Browser / Chrome Mode
+        if action_mode == "search":
+            encoded = urllib.parse.quote(safe)
+            url = f"https://www.google.com/search?q={encoded}"
+            action = "search"
+        else:
+            url = safe
+            if not url.startswith("http://") and not url.startswith("https://"):
+                url = "https://" + url
+            action = "browse"
+
+        cmd = (
+            f"am start -a android.intent.action.VIEW -d '{url}' com.android.chrome 2>/dev/null || "
+            f"am start -a android.intent.action.VIEW -d '{url}' com.android.browser 2>/dev/null || "
+            f"am start -a android.intent.action.VIEW -d '{url}'"
+        )
+        ok = self.send_shell_command(cmd, allow_fallback=True)
+        return {"ok": ok, "target": "chrome", "action": action, "url": url}
 
     def launch_app(self, app_type, custom_pkg=""):
         app = app_type.lower().strip()
@@ -582,6 +804,14 @@ class AdbController:
                 txt = step[5:].strip()
                 self.send_text(txt)
                 executed.append(f"TEXT:{txt}")
+            elif norm.startswith("yt:") or norm.startswith("youtube:"):
+                link = step.split(":", 1)[1].strip()
+                self.open_deeplink(link, target="youtube")
+                executed.append(f"YT:{link}")
+            elif norm.startswith("chrome:") or norm.startswith("url:") or norm.startswith("http:") or norm.startswith("https:"):
+                link = step if (norm.startswith("http:") or norm.startswith("https:")) else step.split(":", 1)[1].strip()
+                self.open_deeplink(link, target="chrome")
+                executed.append(f"URL:{link}")
             elif norm == "cursor" or norm == "mouse":
                 self.toggle_remote_mouse()
                 executed.append("TOGGLE:CURSOR")
@@ -1171,7 +1401,7 @@ def load_html_page():
                 return f.read()
         except Exception as err:
             return f"<!DOCTYPE html><html><body><h2>Error loading index.html: {err}</h2></body></html>"
-    return "<!DOCTYPE html><html><body><h2>index.html not found</h2><p>Please place index.html in the same directory as projector.py.</p></body></html>"
+    return "<!DOCTYPE html><html><body><h2>index.html not found</h2><p>Please place index.html in the same directory as remote.py.</p></body></html>"
 
 
 # ---------------------------------------------------------------------------
@@ -1190,6 +1420,9 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
 
         if path_only == "/" or path_only.startswith("/?"):
             self._serve_html(load_html_page())
+        elif path_only in ("/reset_connection", "/reconnect"):
+            res = controller.hard_reset_connection()
+            self._json(res)
         elif path_only == "/status":
             self._json(
                 {
@@ -1252,6 +1485,8 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
         elif path_only == "/files":
             target = query.get("path", ["/sdcard"])[0]
             self._json(controller.list_files(target))
+        elif path_only == "/scrcpy_status":
+            self._json(controller.get_scrcpy_status())
         elif path_only == "/screenshot":
             img_bytes, mime = controller.capture_screenshot()
             if not img_bytes:
@@ -1346,6 +1581,28 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
             key = body.get("key", "")
             ok = controller.send_key(key)
             self._json({"ok": ok})
+
+        elif path_only == "/deeplink":
+            raw_url = body.get("url", "") or body.get("query", "")
+            target = body.get("target", "auto")
+            action_type = body.get("action", "auto")
+            res = controller.open_deeplink(raw_url, target=target, action_type=action_type)
+            self._json(res)
+
+        elif path_only in ("/clear_queue", "/stop"):
+            with controller.lock:
+                if controller.shell_proc and controller.shell_proc.poll() is None:
+                    try:
+                        controller.shell_proc.stdin.write("\x03\n")
+                        controller.shell_proc.stdin.flush()
+                    except Exception:
+                        pass
+            self._json({"ok": True, "cleared": True})
+
+        elif path_only in ("/reset_connection", "/reconnect", "/reset"):
+            ip_arg = body.get("ip") if isinstance(body, dict) else None
+            res = controller.hard_reset_connection(target_ip=ip_arg)
+            self._json(res)
 
         elif path_only == "/command":
             cmd_str = body.get("command", "")
@@ -1444,6 +1701,18 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
             custom_pkg = body.get("package", "")
             ok = controller.launch_app(app_type, custom_pkg)
             self._json({"ok": ok})
+
+        elif path_only == "/launch_scrcpy":
+            max_fps = int(body.get("max_fps", 60))
+            bit_rate = str(body.get("bit_rate", "4M"))
+            max_size = int(body.get("max_size", 1280))
+            audio = bool(body.get("audio", False))
+            res = controller.launch_scrcpy(max_fps=max_fps, bit_rate=bit_rate, max_size=max_size, audio=audio)
+            self._json(res)
+
+        elif path_only == "/stop_scrcpy":
+            res = controller.stop_scrcpy()
+            self._json(res)
 
         elif path_only == "/file_action":
             action = body.get("action", "")

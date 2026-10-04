@@ -664,6 +664,353 @@
       opacity: 0.75;
     }
 
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .app-card {
+      background: linear-gradient(145deg, #222836, #191e29);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+      border-radius: var(--radius-md);
+      padding: 14px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 3px 4px 8px rgba(0, 0, 0, 0.4), -2px -2px 6px rgba(255, 255, 255, 0.02);
+      transition: all 0.12s ease;
+      position: relative;
+    }
+
+    .app-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.15);
+      background: linear-gradient(145deg, #283040, #1e2431);
+      box-shadow: 4px 6px 14px rgba(0, 0, 0, 0.5);
+    }
+
+    .app-card:active {
+      transform: translateY(1px);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .app-card-interactive {
+      cursor: default;
+      padding: 12px 8px 10px;
+    }
+
+    .app-card-interactive:hover {
+      transform: none;
+    }
+
+    .app-card-main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      cursor: pointer;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 8px;
+      transition: opacity 0.1s ease;
+    }
+
+    .app-card-main:hover {
+      opacity: 0.9;
+    }
+
+    .app-card-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .card-sub-btn {
+      flex: 1;
+      height: 26px;
+      padding: 0 4px;
+      background: var(--cinema-surface);
+      border: 1px solid var(--cinema-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 10px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      transition: all 0.12s ease;
+      white-space: nowrap;
+    }
+
+    .card-sub-btn:hover {
+      color: var(--text-primary);
+      border-color: rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .card-sub-btn-accent {
+      color: #ef4444;
+      border-color: rgba(239, 68, 68, 0.35);
+      background: rgba(239, 68, 68, 0.08);
+    }
+
+    .card-sub-btn-accent:hover {
+      color: #ffffff;
+      border-color: #ef4444;
+      background: #ef4444;
+    }
+
+    .card-sub-btn-cyan {
+      color: #38bdf8;
+      border-color: rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .card-sub-btn-cyan:hover {
+      color: #ffffff;
+      border-color: #38bdf8;
+      background: #0284c7;
+    }
+
+    /* Kebab Dropdown on Core Launcher Cards */
+    .kebab-menu-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s ease;
+      z-index: 10;
+    }
+
+    .kebab-menu-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .kebab-dropdown {
+      position: absolute;
+      top: 34px;
+      right: 6px;
+      background: rgba(18, 22, 32, 0.97);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: var(--radius-md);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.25);
+      padding: 6px;
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 160px;
+      animation: kebabPop 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .kebab-dropdown.show {
+      display: flex;
+    }
+
+    @keyframes kebabPop {
+      from { opacity: 0; transform: scale(0.92) translateY(-4px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .kebab-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      white-space: nowrap;
+      text-align: left;
+    }
+
+    .kebab-item:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .kebab-item-accent:hover {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    .kebab-item-cyan:hover {
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+    }
+
+    /* Floating Ambient Queue Stream Notification Overlay */
+    .remote-console-wrapper {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .remote-queue-overlay {
+      position: absolute;
+      top: 14px;
+      left: 102%;
+      width: 135px;
+      background: rgba(14, 18, 26, 0.88);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: var(--radius-md);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.65), 0 0 16px rgba(56, 189, 248, 0.15);
+      padding: 8px 10px;
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      animation: queueFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      pointer-events: auto;
+    }
+
+    @media (max-width: 1080px) {
+      .remote-queue-overlay {
+        position: relative;
+        left: auto;
+        top: auto;
+        width: 100%;
+        margin-top: 10px;
+      }
+    }
+
+    @keyframes queueFadeIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .queue-overlay-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      padding-bottom: 5px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .queue-hdr-left {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .queue-pulse-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 6px #38bdf8;
+      animation: queuePulse 1.2s infinite ease-in-out;
+    }
+
+    @keyframes queuePulse {
+      0%, 100% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .queue-hdr-title {
+      font-family: var(--font-mono);
+      font-size: 8.5px;
+      font-weight: 700;
+      color: #94a3b8;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .queue-hdr-count {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 800;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.15);
+      padding: 1px 4px;
+      border-radius: 4px;
+    }
+
+    .queue-clear-pill {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.35);
+      border-radius: 4px;
+      color: #ef4444;
+      font-size: 9px;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      padding: 2px 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.12s ease;
+    }
+
+    .queue-clear-pill:hover {
+      background: #ef4444;
+      color: #ffffff;
+    }
+
+    .queue-pills-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .queue-pill-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      padding: 4px 7px;
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      color: #e2e8f0;
+      animation: pillSlide 0.15s ease-out;
+    }
+
+    .queue-pill-item.active-executing {
+      border-color: #38bdf8;
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+    }
+
+    @keyframes pillSlide {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .tool-btn-group {
       display: flex;
       align-items: center;
@@ -707,6 +1054,117 @@
       flex-direction: column;
       gap: 14px;
       box-shadow: var(--shadow-deck);
+    }
+
+    /* Scrcpy 60 FPS Hardware Mirror Hero Card */
+    .scrcpy-mirror-card {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(14, 165, 233, 0.03) 100%);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .scrcpy-mirror-card:hover {
+      border-color: rgba(56, 189, 248, 0.45);
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.15);
+    }
+
+    .scrcpy-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .scrcpy-badge-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .scrcpy-pill-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: var(--cinema-cyan);
+      background: rgba(56, 189, 248, 0.15);
+      padding: 2px 7px;
+      border-radius: 4px;
+      display: inline-block;
+      text-transform: uppercase;
+    }
+
+    .scrcpy-status-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .scrcpy-status-tag.active {
+      color: var(--cinema-emerald);
+      font-weight: 700;
+    }
+
+    .scrcpy-card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .scrcpy-card-desc {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .scrcpy-card-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-scrcpy-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      letter-spacing: 0.04em;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(3, 105, 161, 0.35);
+      transition: all 0.18s ease;
+    }
+
+    .btn-scrcpy-primary:hover {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      box-shadow: 0 4px 16px rgba(14, 165, 233, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .btn-scrcpy-primary.scrcpy-active {
+      background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+      border-color: rgba(239, 68, 68, 0.5);
+      box-shadow: 0 2px 8px rgba(185, 28, 28, 0.35);
+    }
+
+    .btn-scrcpy-primary.scrcpy-active:hover {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      box-shadow: 0 4px 16px rgba(239, 68, 68, 0.45);
     }
 
     .screen-monitor-hdr {
@@ -1259,6 +1717,279 @@
       text-align: center;
     }
 
+    .app-card-pkg {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+      margin-top: -6px;
+    }
+
+    /* Kebab Dropdown Navigation in Core Launchers */
+    .app-card-interactive {
+      position: relative;
+    }
+
+    .kebab-menu-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 26px;
+      height: 26px;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      z-index: 5;
+    }
+
+    .kebab-menu-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--cinema-border);
+      color: var(--cinema-cyan);
+    }
+
+    .kebab-dropdown {
+      position: absolute;
+      top: 38px;
+      right: 8px;
+      background: rgba(14, 18, 27, 0.96);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--cinema-border);
+      border-radius: var(--radius-md);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7), 0 0 15px rgba(56, 189, 248, 0.15);
+      min-width: 175px;
+      padding: 5px;
+      display: none;
+      flex-direction: column;
+      gap: 3px;
+      z-index: 100;
+    }
+
+    .kebab-dropdown.active {
+      display: flex;
+      animation: kebabIn 0.14s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes kebabIn {
+      0% { opacity: 0; transform: translateY(-4px) scale(0.96); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .kebab-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.12s ease;
+      width: 100%;
+    }
+
+    .kebab-item:hover {
+      background: rgba(56, 189, 248, 0.14);
+      color: var(--cinema-cyan);
+    }
+
+    .kebab-item svg {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+
+    /* Ambient Floating Queue Notification Overlay */
+    .remote-column-wrapper {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .remote-queue-overlay {
+      position: absolute;
+      top: 6px;
+      right: -16px;
+      transform: translateX(100%);
+      width: 215px;
+      background: rgba(14, 18, 27, 0.9);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: var(--radius-md);
+      padding: 10px 12px;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.65), 0 0 16px rgba(56, 189, 248, 0.12);
+      z-index: 45;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .remote-queue-overlay.visible {
+      opacity: 0.96;
+      pointer-events: auto;
+      transform: translateX(calc(100% + 4px));
+    }
+
+    @media (max-width: 1250px) {
+      .remote-queue-overlay {
+        position: static;
+        width: 100%;
+        transform: none;
+        margin-top: 10px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+      }
+      .remote-queue-overlay.visible {
+        transform: none;
+      }
+    }
+
+    .queue-overlay-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 6px;
+    }
+
+    .queue-overlay-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .queue-overlay-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cinema-cyan);
+      box-shadow: 0 0 8px var(--cinema-cyan);
+      animation: queueBlip 1.5s infinite ease-in-out;
+    }
+
+    @keyframes queueBlip {
+      0%, 100% { opacity: 0.4; transform: scale(0.9); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .queue-overlay-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--cinema-cyan);
+      text-transform: uppercase;
+    }
+
+    .queue-overlay-badge {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--cinema-cyan);
+    }
+
+    .queue-overlay-clear-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(239, 68, 68, 0.14);
+      border: 1px solid rgba(239, 68, 68, 0.32);
+      color: #ef4444;
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-size: 10px;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .queue-overlay-clear-btn:hover {
+      background: rgba(239, 68, 68, 0.28);
+      border-color: #ef4444;
+      color: #ffffff;
+    }
+
+    .queue-overlay-stream {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+    }
+
+    .queue-pill-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: var(--radius-sm);
+      padding: 4px 8px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-secondary);
+      animation: queuePillIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transition: all 0.18s ease;
+    }
+
+    @keyframes queuePillIn {
+      0% { opacity: 0; transform: translateY(-4px) scale(0.96); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .queue-pill-item.active {
+      border-color: rgba(56, 189, 248, 0.45);
+      color: #ffffff;
+      background: rgba(56, 189, 248, 0.08);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.12);
+    }
+
+    .queue-pill-item.done {
+      opacity: 0.55;
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--cinema-emerald);
+    }
+
+    .queue-pill-item.err {
+      border-color: rgba(239, 68, 68, 0.4);
+      color: var(--cinema-ruby);
+    }
+
+    .queue-pill-item.cleared {
+      opacity: 0.35;
+      text-decoration: line-through;
+      border-color: rgba(239, 68, 68, 0.25);
+      color: var(--cinema-ruby);
+    }
+
+    .queue-pill-key {
+      font-weight: 700;
+    }
+
+    .queue-pill-status {
+      font-size: 9px;
+      letter-spacing: 0.04em;
+      opacity: 0.85;
+    }
+
     /* Terminal & Macros View */
     .cmd-input-bar {
       display: flex;
@@ -1567,7 +2298,7 @@
       color: #ef4444;
     }
 
-    /* Prominent Remote Status Bar (v2projector.py) */
+    /* Prominent Remote Status Bar */
     .remote-status-bar {
       text-align: center;
       font-family: var(--font-mono);
@@ -2222,6 +2953,15 @@
         <span>Keys</span>
       </button>
 
+      <button class="hdr-btn" id="btnRefreshUi" onclick="refreshStudioUi()" title="Refresh connection, apps, and status">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="23 4 23 10 17 10"></polyline>
+          <polyline points="1 20 1 14 7 14"></polyline>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        <span>Refresh</span>
+      </button>
+
       <button class="hdr-btn" onclick="openSettingsModal()" title="Connection Settings">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"></circle>
@@ -2246,14 +2986,15 @@
   <!-- Main Workspace -->
   <main class="workspace-container">
 
-    <!-- Left Rail: Exact 15-Button Physical Remote Deck -->
-    <section class="remote-console">
+    <!-- Left Rail: Exact 15-Button Physical Remote Deck with Ambient Queue Overlay -->
+    <div class="remote-column-wrapper">
+      <section class="remote-console">
       <div class="panel-header">
         <span class="panel-label">Physical Remote Deck</span>
         <span class="mode-indicator-chip" id="remoteModeChip">GRID FOCUS</span>
       </div>
 
-      <!-- Prominent Status Bar (v2projector.py) -->
+      <!-- Prominent Status Bar -->
       <div class="remote-status-bar" id="remoteStatusBar">
         <span id="remoteStatusText">Connected to HY300</span>
       </div>
@@ -2373,6 +3114,28 @@
       </div>
     </section>
 
+    <!-- Ambient Floating Queue Notification Overlay -->
+    <aside class="remote-queue-overlay" id="remoteQueueOverlay" aria-label="Command Queue Stream">
+      <div class="queue-overlay-hdr">
+        <div class="queue-overlay-title-wrap">
+          <span class="queue-overlay-dot"></span>
+          <span class="queue-overlay-title">QUEUE STREAM</span>
+          <span class="queue-overlay-badge" id="queueOverlayBadge">IDLE</span>
+        </div>
+        <button class="queue-overlay-clear-btn" id="btnCancelQueue" onclick="clearCommandQueue()" title="Cancel in-flight queue">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          <span>Cancel</span>
+        </button>
+      </div>
+      <div class="queue-overlay-stream" id="queuePillsStream">
+        <!-- Live in-flight command pills appear here dynamically -->
+      </div>
+    </aside>
+  </div>
+
     <!-- Right Rail: Interactive Studio Stage -->
     <section class="studio-stage">
 
@@ -2421,6 +3184,26 @@
             </div>
             <div style="font-family:var(--font-mono); font-size:11px; color:var(--text-muted);" id="screenSnapshotTime">
               --:--:--</div>
+          </div>
+
+          <!-- 60 FPS Scrcpy Hero Banner -->
+          <div class="scrcpy-mirror-card">
+            <div class="scrcpy-card-info">
+              <div class="scrcpy-badge-row">
+                <span class="scrcpy-pill-tag">HARDWARE ACCELERATED</span>
+                <span class="scrcpy-status-tag" id="scrcpyStatusTag">MIRROR STANDBY</span>
+              </div>
+              <div class="scrcpy-card-title">60 FPS Ultra-Low Latency Mirror</div>
+              <div class="scrcpy-card-desc">Zero-lag native desktop mirror with full mouse and keyboard pass-through (sub-50ms latency).</div>
+            </div>
+            <div class="scrcpy-card-actions">
+              <button class="btn-scrcpy-primary" id="btnLaunchScrcpy" onclick="toggleScrcpyMirror()" title="Launch native 60 FPS mirror window">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span id="btnScrcpyText">LAUNCH 60 FPS MIRROR</span>
+              </button>
+            </div>
           </div>
 
           <div class="screen-viewport-wrap">
@@ -2481,12 +3264,32 @@
         <!-- Core System Launchers -->
         <div class="app-section-divider">CORE LAUNCHERS</div>
         <div class="app-grid">
-          <div class="app-card" onclick="launchApp('yt')">
-            <div class="app-icon-wrap" style="border-color: rgba(239, 68, 68, 0.4);">
+          <!-- YouTube Launcher Card with Kebab Dropdown -->
+          <div class="app-card app-card-interactive" id="cardYouTube" onclick="launchApp('yt')" title="Click to Launch YouTube TV">
+            <button class="kebab-menu-btn" id="kebabBtnYt" onclick="event.stopPropagation(); toggleAppKebab(event, 'kebabDropdownYt')" title="More actions">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="2"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+                <circle cx="12" cy="19" r="2"></circle>
+              </svg>
+            </button>
+            <div class="kebab-dropdown" id="kebabDropdownYt" onclick="event.stopPropagation()">
+              <button class="kebab-item" onclick="launchApp('yt'); closeAllKebabs()">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <span>Launch YouTube TV</span>
+              </button>
+              <button class="kebab-item" onclick="openDeepLinkModal('youtube', 'video'); closeAllKebabs()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                <span>Paste Video Link</span>
+              </button>
+              <button class="kebab-item" onclick="openDeepLinkModal('youtube', 'search'); closeAllKebabs()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <span>Search Videos</span>
+              </button>
+            </div>
+            <div class="app-icon-wrap" style="border-color: rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.08);">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
-                <path
-                  d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z">
-                </path>
+                <path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path>
                 <polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon>
               </svg>
             </div>
@@ -2505,8 +3308,30 @@
             <span class="app-card-pkg">netflix.ninja</span>
           </div>
 
-          <div class="app-card" onclick="launchApp('browser')">
-            <div class="app-icon-wrap" style="border-color: rgba(56, 189, 248, 0.4);">
+          <!-- Browser Launcher Card with Kebab Dropdown -->
+          <div class="app-card app-card-interactive" id="cardBrowser" onclick="launchApp('browser')" title="Click to Launch Browser">
+            <button class="kebab-menu-btn" id="kebabBtnBrowser" onclick="event.stopPropagation(); toggleAppKebab(event, 'kebabDropdownBrowser')" title="More actions">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="2"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+                <circle cx="12" cy="19" r="2"></circle>
+              </svg>
+            </button>
+            <div class="kebab-dropdown" id="kebabDropdownBrowser" onclick="event.stopPropagation()">
+              <button class="kebab-item" onclick="launchApp('browser'); closeAllKebabs()">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                <span>Launch Browser</span>
+              </button>
+              <button class="kebab-item" onclick="openDeepLinkModal('chrome', 'url'); closeAllKebabs()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                <span>Paste Web URL</span>
+              </button>
+              <button class="kebab-item" onclick="openDeepLinkModal('chrome', 'search'); closeAllKebabs()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <span>Google Search</span>
+              </button>
+            </div>
+            <div class="app-icon-wrap" style="border-color: rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.08);">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="2" y1="12" x2="22" y2="12"></line>
@@ -2980,6 +3805,44 @@
     </div>
   </div>
 
+  <!-- Deep Link & Video Caster Modal -->
+  <div class="modal-overlay" id="deepLinkModal">
+    <div class="modal-card" style="max-width: 480px;">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span id="deepLinkModalIcon"></span>
+          <span class="modal-title" id="deepLinkModalTitle">Cast to TV</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeDeepLinkModal()">X</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="font-size:12px; color:var(--text-secondary);" id="deepLinkModalPrompt">
+            Paste a YouTube video link, Short, or video ID to stream directly:
+          </div>
+          <div style="display:flex; gap:8px;">
+            <input type="text" class="cmd-input" id="deepLinkInput" placeholder="https://..." style="flex:1;" onkeydown="if(event.key==='Enter') executeDeepLink();">
+            <button class="tactile-btn" style="height:40px; padding:0 12px;" onclick="pasteDeepLinkFromClipboard()" title="Paste from clipboard">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+              <span>Paste</span>
+            </button>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+            <button class="send-btn" id="btnCastDeepLink" style="flex:1; height:38px;" onclick="executeDeepLink()">
+              Cast to Projector
+            </button>
+            <button class="hdr-btn" style="height:38px; padding:0 14px;" onclick="closeDeepLinkModal()">Cancel</button>
+          </div>
+          <!-- Recent Links Shelf -->
+          <div id="deepLinkRecentSection" style="margin-top:6px; display:none;">
+            <div style="font-family:var(--font-mono); font-size:10px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px;">Recent Links</div>
+            <div id="deepLinkRecentList" style="display:flex; flex-direction:column; gap:4px; max-height:120px; overflow-y:auto;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     let targetIp = "192.168.100.5";
     let mouseSens = 1.8;
@@ -3181,12 +4044,104 @@
       }
     }
 
-    // 15-Button Dual-Engine Execution — fire-and-forget for zero-latency UI feedback.
-    // UI state updates happen immediately; the HTTP request is sent in the background.
+    // 15-Button Dual-Engine Execution with Live Queue Stream Tracking
+    let queueOverlayItems = [];
+    let queueOverlayHideTimer = null;
+    let queueSeqCounter = 0;
+
+    function pushQueueOverlayItem(keyName) {
+      const overlay = document.getElementById('remoteQueueOverlay');
+      const badge = document.getElementById('queueOverlayBadge');
+      const stream = document.getElementById('queuePillsStream');
+      if (!overlay || !stream) return 0;
+
+      const qId = ++queueSeqCounter;
+      const item = { id: qId, key: keyName, status: 'active', time: Date.now() };
+      queueOverlayItems.push(item);
+      if (queueOverlayItems.length > 5) queueOverlayItems.shift();
+
+      renderQueueOverlay();
+      overlay.classList.add('visible');
+
+      if (badge) {
+        const activeCount = queueOverlayItems.filter(i => i.status === 'active').length;
+        badge.textContent = activeCount > 0 ? `${activeCount} QUEUED` : 'SENT';
+      }
+
+      if (queueOverlayHideTimer) clearTimeout(queueOverlayHideTimer);
+      return qId;
+    }
+
+    function markQueueOverlayItemDone(qId, isErr = false) {
+      const it = queueOverlayItems.find(i => i.id === qId);
+      if (it) it.status = isErr ? 'err' : 'done';
+      renderQueueOverlay();
+
+      const badge = document.getElementById('queueOverlayBadge');
+      const overlay = document.getElementById('remoteQueueOverlay');
+      if (badge) {
+        const activeCount = queueOverlayItems.filter(i => i.status === 'active').length;
+        badge.textContent = activeCount > 0 ? `${activeCount} QUEUED` : 'IDLE';
+      }
+
+      if (queueOverlayHideTimer) clearTimeout(queueOverlayHideTimer);
+      queueOverlayHideTimer = setTimeout(() => {
+        const remaining = queueOverlayItems.filter(i => i.status === 'active').length;
+        if (remaining === 0 && overlay) {
+          overlay.classList.remove('visible');
+        }
+      }, 1300);
+    }
+
+    function renderQueueOverlay() {
+      const stream = document.getElementById('queuePillsStream');
+      if (!stream) return;
+      stream.innerHTML = '';
+      queueOverlayItems.forEach(it => {
+        const div = document.createElement('div');
+        div.className = `queue-pill-item ${it.status}`;
+        const statusText = it.status === 'active' ? 'SENT' : (it.status === 'done' ? 'ACK' : (it.status === 'cleared' ? 'PURGED' : 'ERR'));
+        div.innerHTML = `
+          <span class="queue-pill-key">${escapeHtml(it.key)}</span>
+          <span class="queue-pill-status">${statusText}</span>
+        `;
+        stream.appendChild(div);
+      });
+    }
+
+    async function clearCommandQueue() {
+      playTone(320, 0.08);
+      showTapFeedback('QUEUE CLEARED');
+      logTerminal('COMMAND QUEUE PURGED BY USER');
+      setStatus('Queue Purged', 'ok');
+
+      queueOverlayItems.forEach(i => {
+        if (i.status === 'active') i.status = 'cleared';
+      });
+      renderQueueOverlay();
+
+      const badge = document.getElementById('queueOverlayBadge');
+      if (badge) badge.textContent = 'CLEARED';
+
+      try {
+        await postJson('/clear_queue', {});
+      } catch (e) {}
+
+      setTimeout(() => {
+        queueOverlayItems = [];
+        renderQueueOverlay();
+        const overlay = document.getElementById('remoteQueueOverlay');
+        if (overlay) overlay.classList.remove('visible');
+      }, 750);
+    }
+
     function sendCmd(keyName, btnId) {
       showTapFeedback(keyName, btnId);
       setStatus('[OK] ' + keyName.toUpperCase(), 'ok');
       logTerminal('REMOTE: ' + keyName);
+
+      const qId = pushQueueOverlayItem(keyName);
+
       fetch('/cmd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3194,12 +4149,39 @@
         keepalive: true
       }).then(r => r.json()).then(d => {
         if (!d.ok) {
+          markQueueOverlayItemDone(qId, true);
           showTapError(d.error || 'NO ROUTE');
           setStatus('[ERR] ' + (d.error || 'FAILED'), 'err');
           if (d.error) logTerminal('ERR: ' + d.error, true);
+        } else {
+          markQueueOverlayItemDone(qId, false);
         }
-      }).catch(() => {});
+      }).catch(() => {
+        markQueueOverlayItemDone(qId, true);
+      });
     }
+
+    // Core Launchers Kebab Dropdown Controller
+    function toggleAppKebab(event, dropdownId) {
+      if (event) event.stopPropagation();
+      const dd = document.getElementById(dropdownId);
+      if (!dd) return;
+      const isOpen = dd.classList.contains('active');
+      closeAllKebabs();
+      if (!isOpen) {
+        dd.classList.add('active');
+      }
+    }
+
+    function closeAllKebabs() {
+      document.querySelectorAll('.kebab-dropdown.active').forEach(el => el.classList.remove('active'));
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.kebab-menu-btn') && !e.target.closest('.kebab-dropdown')) {
+        closeAllKebabs();
+      }
+    });
 
     let mouseMode = false;
     let virtualCursorX = 640;
@@ -3318,13 +4300,14 @@
         if (e.button !== undefined && e.button !== 0) return;
         el.classList.add('pressed');
 
-        // Engage repeat glide after 250ms
+        // Engage repeat glide: 85ms in mouse mode, 160ms in grid mode
+        const intervalMs = mouseMode ? 85 : 160;
         holdTimer = setTimeout(() => {
           repeatInterval = setInterval(() => {
             if (repeatActionFn) repeatActionFn();
             else actionFn();
-          }, 85);
-        }, 250);
+          }, intervalMs);
+        }, 260);
       }
 
       function cancelPress() {
@@ -3369,6 +4352,219 @@
         pwr.addEventListener('pointerup', cancelPwr);
         pwr.addEventListener('pointerleave', cancelPwr);
         pwr.addEventListener('pointercancel', cancelPwr);
+      }
+    }
+
+    // Refresh Studio UI Function with Hard Connection Power-Cycle Reset
+    async function refreshStudioUi() {
+      playTone(600, 0.05);
+      showTapFeedback('RESETTING LINK');
+      setStatus('Power-Cycling Connection & Purging Pipes...', 'ok');
+      logTerminal('FULL RESET: Disconnecting ADB, flushing sockets & performing clean handshake...');
+      const btn = document.getElementById('btnRefreshUi');
+      if (btn) btn.classList.add('active');
+
+      try {
+        // 1. Purge frontend queue overlay immediately
+        if (typeof clearCommandQueue === 'function') {
+          clearCommandQueue();
+        }
+
+        // 2. Perform hard connection reset on the backend (like cycling Wi-Fi)
+        const resetRes = await postJson('/reset_connection', { ip: targetIp });
+        if (resetRes && resetRes.connected) {
+          if (resetRes.ip) {
+            targetIp = resetRes.ip;
+            const ipLbl = document.getElementById('targetIpLabel');
+            if (ipLbl) ipLbl.textContent = targetIp;
+          }
+          showTapFeedback('LINK ONLINE');
+          setStatus(`CONNECTED: ${targetIp}`, 'ok');
+          logTerminal(`RESET SUCCESS: Re-established link to ${targetIp}:5555 with hardware input rediscovery.`);
+          playTone(880, 0.08);
+        } else {
+          showTapError('RESET: TV OFFLINE');
+          setStatus('TV Offline (Check Projector Wi-Fi & IP)', 'err');
+          logTerminal('RESET WARNING: Projector unreachable on port 5555. Check IP in Settings.', true);
+          playTone(300, 0.1);
+        }
+
+        // 3. Concurrently sync peripheral systems & capture fresh frame
+        await Promise.allSettled([
+          checkStatus(),
+          loadPinnedApps(),
+          winLoadStorage()
+        ]);
+
+        if (typeof screenMonitorActive !== 'undefined' && screenMonitorActive) {
+          captureManualSnapshot();
+        }
+      } catch (err) {
+        showTapError('RESET FAILED');
+        setStatus('Reset Error: ' + (err.message || 'Network Fail'), 'err');
+      } finally {
+        setTimeout(() => {
+          if (btn) btn.classList.remove('active');
+        }, 600);
+      }
+    }
+
+    // Deep Link & Video Casting Controller
+    let currentDeepLinkTarget = 'youtube'; // 'youtube' | 'chrome'
+    let currentDeepLinkAction = 'video';   // 'video' | 'url' | 'search'
+
+    function openDeepLinkModal(target, actionType) {
+      currentDeepLinkTarget = target || 'youtube';
+      currentDeepLinkAction = actionType || (target === 'youtube' ? 'video' : 'url');
+
+      const modal = document.getElementById('deepLinkModal');
+      const title = document.getElementById('deepLinkModalTitle');
+      const prompt = document.getElementById('deepLinkModalPrompt');
+      const input = document.getElementById('deepLinkInput');
+      const castBtn = document.getElementById('btnCastDeepLink');
+      const icon = document.getElementById('deepLinkModalIcon');
+
+      if (currentDeepLinkTarget === 'youtube') {
+        if (currentDeepLinkAction === 'search') {
+          title.textContent = 'Search YouTube';
+          prompt.textContent = 'Enter search keywords to find videos on YouTube TV:';
+          input.placeholder = 'e.g., lofi hip hop, movie trailers...';
+          castBtn.textContent = 'Search on TV';
+        } else {
+          title.textContent = 'Cast YouTube Video';
+          prompt.textContent = 'Paste any YouTube link, Short, or video ID to stream instantly:';
+          input.placeholder = 'https://youtu.be/... or https://youtube.com/watch?v=...';
+          castBtn.textContent = 'Play on TV';
+        }
+        icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z"></path><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"></polygon></svg>';
+      } else {
+        if (currentDeepLinkAction === 'search') {
+          title.textContent = 'Google Web Search';
+          prompt.textContent = 'Enter search terms to browse Google on projector screen:';
+          input.placeholder = 'Search Google...';
+          castBtn.textContent = 'Search Google';
+        } else {
+          title.textContent = 'Open Web URL';
+          prompt.textContent = 'Paste website link or domain to open directly in Browser:';
+          input.placeholder = 'https://example.com or wikipedia.org';
+          castBtn.textContent = 'Open in Browser';
+        }
+        icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1 4-10z"></path></svg>';
+      }
+
+      input.value = '';
+      renderRecentLinks();
+      modal.classList.add('active');
+      setTimeout(() => input.focus(), 80);
+      playTone(560, 0.04);
+    }
+
+    function closeDeepLinkModal() {
+      const modal = document.getElementById('deepLinkModal');
+      if (modal) modal.classList.remove('active');
+    }
+
+    async function pasteDeepLinkFromClipboard() {
+      try {
+        if (navigator.clipboard && navigator.clipboard.readText) {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            document.getElementById('deepLinkInput').value = text.trim();
+            playTone(680, 0.04);
+            showTapFeedback('CLIPBOARD PASTED');
+          }
+        } else {
+          showTapError('CLIPBOARD UNAVAILABLE');
+        }
+      } catch (err) {
+        showTapError('PERM DENIED');
+      }
+    }
+
+    async function executeDeepLink() {
+      const input = document.getElementById('deepLinkInput');
+      const val = input.value.trim();
+      if (!val) {
+        showTapError('ENTER LINK OR QUERY');
+        return;
+      }
+
+      closeDeepLinkModal();
+      showTapFeedback('CASTING TO TV');
+      logTerminal(`CASTING [${currentDeepLinkTarget.toUpperCase()}]: ${val}`);
+      setStatus(`CASTING TO ${currentDeepLinkTarget.toUpperCase()}...`, 'ok');
+      playTone(720, 0.08);
+
+      // Save to recent links
+      saveRecentLink(val, currentDeepLinkTarget, currentDeepLinkAction);
+
+      const res = await postJson('/deeplink', {
+        url: val,
+        query: val,
+        target: currentDeepLinkTarget,
+        action: currentDeepLinkAction
+      });
+
+      if (res.ok) {
+        setStatus(`PLAYING ON TV`, 'ok');
+        logTerminal(`CAST SUCCESS: Sent to ${res.target || currentDeepLinkTarget}`);
+        playTone(880, 0.06);
+      } else {
+        setStatus(`CAST FAILED: ${res.error || 'Check connection'}`, 'err');
+        showTapError('CAST FAILED');
+        logTerminal(`CAST ERR: ${res.error || 'Failed to dispatch'}`, true);
+      }
+    }
+
+    function saveRecentLink(link, target, action) {
+      try {
+        let recents = JSON.parse(localStorage.getItem('hy300_recent_deeplinks') || '[]');
+        recents = recents.filter(r => r.link !== link);
+        recents.unshift({ link, target, action, time: Date.now() });
+        recents = recents.slice(0, 5);
+        localStorage.setItem('hy300_recent_deeplinks', JSON.stringify(recents));
+      } catch (e) {}
+    }
+
+    function renderRecentLinks() {
+      const sec = document.getElementById('deepLinkRecentSection');
+      const list = document.getElementById('deepLinkRecentList');
+      if (!sec || !list) return;
+
+      try {
+        const recents = JSON.parse(localStorage.getItem('hy300_recent_deeplinks') || '[]');
+        const filtered = recents.filter(r => r.target === currentDeepLinkTarget);
+        if (filtered.length === 0) {
+          sec.style.display = 'none';
+          list.innerHTML = '';
+          return;
+        }
+
+        sec.style.display = 'block';
+        list.innerHTML = '';
+        filtered.forEach(item => {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex; align-items:center; justify-content:space-between; gap:6px; background:var(--cinema-surface); border:1px solid var(--cinema-border); border-radius:var(--radius-sm); padding:5px 8px; cursor:pointer; font-size:11px; font-family:var(--font-mono); color:var(--text-secondary);';
+          row.title = item.link;
+          
+          const label = document.createElement('span');
+          label.style.cssText = 'overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;';
+          label.textContent = item.link;
+          
+          const castIcon = document.createElement('span');
+          castIcon.style.cssText = 'color:var(--cinema-cyan); font-weight:700; font-size:10px; flex-shrink:0;';
+          castIcon.textContent = 'CAST';
+
+          row.appendChild(label);
+          row.appendChild(castIcon);
+          row.onclick = () => {
+            document.getElementById('deepLinkInput').value = item.link;
+            executeDeepLink();
+          };
+          list.appendChild(row);
+        });
+      } catch (e) {
+        sec.style.display = 'none';
       }
     }
 
@@ -3765,6 +4961,10 @@
             if (placeholder) placeholder.style.display = 'none';
             img.style.display = 'block';
           };
+          img.onerror = () => {
+            if (img.dataset.prevUrl) URL.revokeObjectURL(img.dataset.prevUrl);
+            URL.revokeObjectURL(objUrl);
+          };
           img.src = objUrl;
         }
         screenMonitorFailCount = 0;
@@ -3774,7 +4974,7 @@
         }
       } catch (err) {
         screenMonitorFailCount++;
-        if (screenMonitorFailCount >= 3) {
+        if (screenMonitorFailCount >= 5) {
           stopScreenMonitor();
           if (placeholder) {
             placeholder.style.display = 'flex';
@@ -3808,6 +5008,77 @@
       a.click();
       document.body.removeChild(a);
       showTapFeedback('SAVED');
+    }
+
+    // -------------------------------------------------------------------------
+    // Scrcpy 60 FPS Hardware Mirror Client Engine
+    // -------------------------------------------------------------------------
+    let scrcpyRunning = false;
+
+    async function checkScrcpyStatus() {
+      try {
+        const res = await fetch('/scrcpy_status');
+        if (res.ok) {
+          const data = await res.json();
+          updateScrcpyUi(data.running);
+        }
+      } catch (e) {}
+    }
+
+    function updateScrcpyUi(running) {
+      scrcpyRunning = !!running;
+      const btn = document.getElementById('btnLaunchScrcpy');
+      const txt = document.getElementById('btnScrcpyText');
+      const tag = document.getElementById('scrcpyStatusTag');
+      if (!btn || !txt) return;
+
+      if (scrcpyRunning) {
+        btn.classList.add('scrcpy-active');
+        txt.textContent = 'CLOSE 60 FPS MIRROR';
+        btn.title = 'Mirror window is running. Click to close.';
+        if (tag) {
+          tag.textContent = 'MIRROR RUNNING [60 FPS]';
+          tag.classList.add('active');
+        }
+      } else {
+        btn.classList.remove('scrcpy-active');
+        txt.textContent = 'LAUNCH 60 FPS MIRROR';
+        btn.title = 'Open high-framerate hardware accelerated mirror window';
+        if (tag) {
+          tag.textContent = 'MIRROR STANDBY';
+          tag.classList.remove('active');
+        }
+      }
+    }
+
+    async function toggleScrcpyMirror() {
+      if (scrcpyRunning) {
+        playTone(500, 0.05);
+        showTapFeedback('CLOSING MIRROR');
+        try {
+          const res = await postJson('/stop_scrcpy', {});
+          if (res && res.ok) {
+            updateScrcpyUi(false);
+            showTapFeedback('MIRROR CLOSED');
+          }
+        } catch (e) {
+          showTapError('CLOSE FAILED');
+        }
+      } else {
+        playTone(880, 0.08);
+        showTapFeedback('STARTING 60 FPS');
+        try {
+          const res = await postJson('/launch_scrcpy', { max_fps: 60, bit_rate: '4M', max_size: 1280 });
+          if (res && res.ok) {
+            updateScrcpyUi(true);
+            showTapFeedback('60 FPS READY');
+          } else {
+            showTapError((res && res.error) || 'LAUNCH FAILED');
+          }
+        } catch (e) {
+          showTapError('LAUNCH ERROR');
+        }
+      }
     }
 
     // -------------------------------------------------------------------------
@@ -4963,7 +6234,9 @@
     loadUserMacros();
     loadPinnedApps();
     checkStatus();
+    checkScrcpyStatus();
     setInterval(checkStatus, 7000);
+    setInterval(checkScrcpyStatus, 5000);
   </script>
 </body>
 
