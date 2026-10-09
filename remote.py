@@ -106,6 +106,20 @@ KEYMAP = {
     "source": "KEYCODE_TV_INPUT",
 }
 
+# Emergency Braking Keys that preempt and purge any in-flight navigation buffer
+EMERGENCY_BRAKE_KEYS = {
+    "back",
+    "escape",
+    "pause",
+    "play",
+    "play_pause",
+    "playpause",
+    "media_play_pause",
+    "stop",
+    "media_stop",
+    "home",
+}
+
 # ---------------------------------------------------------------------------
 # Win32 Hardware Cursor Tracking
 # ---------------------------------------------------------------------------
@@ -190,6 +204,8 @@ class AdbController:
         self.cursor_y = PROJECTOR_HEIGHT // 2
         self.mouse_worker_in_flight = False
         self.scrcpy_proc = None
+        self.last_key_name = None
+        self.last_key_time = 0.0
 
     def connect(self, target_ip=None):
         if target_ip:
@@ -361,6 +377,27 @@ class AdbController:
                     pass
                 self.shell_proc = None
 
+    def purge_pipeline(self):
+        """Immediately terminates the active shell process to discard all pending
+        unexecuted commands sitting in the OS pipe buffer, then respawns a clean shell.
+        This provides deterministic emergency braking against buffer bloat."""
+        with self.lock:
+            if self.shell_proc:
+                try:
+                    self.shell_proc.terminate()
+                    self.shell_proc.wait(timeout=0.2)
+                except Exception:
+                    try:
+                        self.shell_proc.kill()
+                    except Exception:
+                        pass
+                self.shell_proc = None
+            if self.is_connected:
+                self._spawn_shell()
+            self.last_key_name = None
+            self.last_key_time = 0.0
+        return True
+
     def send_shell_command(self, cmd_line, allow_fallback=True):
         if not self.is_connected:
             return False
@@ -409,6 +446,34 @@ class AdbController:
 
         if not self.is_connected:
             return False
+
+        now = time.time()
+
+        # 1. Emergency Preemptive Braking:
+        # If user presses Pause, Stop, Back, Escape, or Home, discard any runaway
+        # forward/backward seeking backlog currently queued in the OS pipe buffer.
+        if k in EMERGENCY_BRAKE_KEYS:
+            self.purge_pipeline()
+
+        # 2. Preemptive Interruption on Navigation Change:
+        # If user was navigating/seeking in one direction (e.g. RIGHT) and suddenly presses
+        # a DIFFERENT key (e.g. LEFT, UP, DOWN, OK, SELECT, ENTER), immediately purge the
+        # previous seek backlog so the new button takes effect with zero delay.
+        elif self.last_key_name in ("right", "left", "up", "down", "dpad_right", "dpad_left", "dpad_up", "dpad_down") and k != self.last_key_name:
+            self.purge_pipeline()
+
+        # 3. Buffer-Bloat Flood Guard:
+        # Android input keyevent via Java runtime (app_process) takes ~200-350ms per key on budget
+        # TV chipsets. Rate-limit identical navigation/volume keys to prevent pipe backlog accumulation.
+        elif k in ("up", "down", "left", "right", "vol_up", "vol_down", "volup", "volume_up", "volume_down"):
+            if k == self.last_key_name:
+                delta = now - self.last_key_time
+                if delta < 0.16:
+                    # Drop excess packet to prevent pipe buffer bloat
+                    return True
+
+        self.last_key_name = k
+        self.last_key_time = now
 
         keycode = KEYMAP.get(k, key_name)
         if not keycode.startswith("KEYCODE_") and not keycode.isdigit():
@@ -1590,13 +1655,7 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
             self._json(res)
 
         elif path_only in ("/clear_queue", "/stop"):
-            with controller.lock:
-                if controller.shell_proc and controller.shell_proc.poll() is None:
-                    try:
-                        controller.shell_proc.stdin.write("\x03\n")
-                        controller.shell_proc.stdin.flush()
-                    except Exception:
-                        pass
+            controller.purge_pipeline()
             self._json({"ok": True, "cleared": True})
 
         elif path_only in ("/reset_connection", "/reconnect", "/reset"):

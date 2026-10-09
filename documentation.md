@@ -363,3 +363,57 @@ To overcome low-framerate software PNG encoding on budget Android TV processors 
 
 
 
+
+---
+
+## 18. Preemptive Command Interruption, Agile Multi-Directional Navigation, and Buffer Bloat Elimination
+
+### Problem Statement
+When streaming key events into a persistent ADB shell pipe (`adb shell`), a producer-consumer latency mismatch exists:
+1. **Producer Rate**: Modern browsers and HTTP clients dispatch 20+ key events in <5 seconds (or up to 30-50 Hz via native keyboard `keydown` auto-repeat). Writing to a local subshell stdin pipe takes <1ms in Python.
+2. **Consumer Latency**: On embedded Android TV and smart projector chipsets (e.g., Allwinner H713), `/system/bin/input` is a Java command launched via `app_process`. Each execution boots a transient JVM, binds to `InputManagerService` via Binder IPC, injects the keycode, and shuts down, taking ~250–350ms per key.
+3. **FIFO Buffer Bloat & Lock-In**:
+   - Because the pipe buffer operates on First-In-First-Out (FIFO) semantics, commands accumulate in the kernel pipe buffer when arrival rate $\lambda$ exceeds service rate $\mu$.
+   - 20 forward seeks (`DPAD_RIGHT`) in 5 seconds take 7–8 seconds to drain on the device.
+   - Any corrective attempt by the user (pressing Pause, Back, or Left Arrow) was placed at the back of the queue (slots 21, 22, 23), unable to preempt the in-flight forward seeking until the video reached the end.
+   - Sending `\x03\n` (SIGINT) to the pipe failed to discard unread bytes already buffered in the OS pipe buffer.
+
+### Architectural Solution
+
+#### A. Hard Pipeline Purge (`purge_pipeline`)
+Rather than attempting soft character interrupts, the server terminates the active `adb shell` process (`terminate()`, falling back to `kill()`). Terminating the subshell process completely drops the underlying OS pipe and immediately flushes all pending, unexecuted byte buffers. A clean persistent shell pipe is respawned in ~5–15ms.
+
+```python
+def purge_pipeline(self):
+    with self.lock:
+        if self.shell_proc:
+            try:
+                self.shell_proc.terminate()
+                self.shell_proc.wait(timeout=0.2)
+            except Exception:
+                try:
+                    self.shell_proc.kill()
+                except Exception:
+                    pass
+            self.shell_proc = None
+        if self.is_connected:
+            self._spawn_shell()
+        self.last_key_name = None
+        self.last_key_time = 0.0
+    return True
+```
+
+#### B. Preemptive Interruption on Navigation Change & Emergency Keys
+To deliver instantaneous directional agility (e.g. `-> -> -> -> -> -> -> <- <- -> -> <-`):
+1. **Direction Change Preemption**: If the previous command was a directional navigation key (`UP`, `DOWN`, `LEFT`, `RIGHT`) and the incoming key is a DIFFERENT key (e.g. switching from `RIGHT` to `LEFT`, `UP`, `DOWN`, or `OK`), the server immediately purges the pipeline first, discarding any remaining forward seeks, and immediately injects the new command on the fresh pipe.
+2. **Emergency Preemption**: Keys in `EMERGENCY_BRAKE_KEYS` (`BACK`, `ESCAPE`, `PAUSE`, `PLAY_PAUSE`, `STOP`, `HOME`) unconditionally purge the pipeline prior to dispatch.
+3. **Burst Flood Guard**: Identical repeating navigation keys are rate-limited with a 160ms threshold to prevent buffer accumulation beyond device processing capacity.
+
+#### C. Client Pacing & Queue Stream Persistence (`index.html`)
+1. **Escape Key Purge**: `Escape` is bound to `CLEAR_QUEUE` in `DEFAULT_KEY_MAP`, immediately posting `/clear_queue` to abort in-flight commands.
+2. **Keyboard Auto-Repeat Filtration**: Native browser `e.repeat` events are filtered out on `keydown`. Held directional keys are paced through a dedicated 220ms interval timer matching device throughput.
+3. **Queue Stream Overlay Persistence**:
+   - Queue history buffer expanded to 8 items (`queueOverlayItems.length > 8`).
+   - Idle fade timeout extended to 4.0 seconds (up from 1.3s).
+   - Emergency purge notice remains visible for 3.5 seconds (up from 750ms).
+   - Switching direction visually transitions pending active pills to `PURGED` instantly.

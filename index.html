@@ -3871,7 +3871,7 @@
       'ArrowLeft': 'LEFT',
       'ArrowRight': 'RIGHT',
       'Enter': 'OK',
-      'Escape': 'BACK',
+      'Escape': 'CLEAR_QUEUE',
       'Backspace': 'BACK',
       'h': 'HOME',
       'm': 'MENU',
@@ -4058,7 +4058,7 @@
       const qId = ++queueSeqCounter;
       const item = { id: qId, key: keyName, status: 'active', time: Date.now() };
       queueOverlayItems.push(item);
-      if (queueOverlayItems.length > 5) queueOverlayItems.shift();
+      if (queueOverlayItems.length > 8) queueOverlayItems.shift();
 
       renderQueueOverlay();
       overlay.classList.add('visible');
@@ -4085,12 +4085,13 @@
       }
 
       if (queueOverlayHideTimer) clearTimeout(queueOverlayHideTimer);
+      // Persist queue visibility for 4.0s of idle time so diagnostics do not disappear prematurely
       queueOverlayHideTimer = setTimeout(() => {
         const remaining = queueOverlayItems.filter(i => i.status === 'active').length;
         if (remaining === 0 && overlay) {
           overlay.classList.remove('visible');
         }
-      }, 1300);
+      }, 4000);
     }
 
     function renderQueueOverlay() {
@@ -4127,18 +4128,32 @@
         await postJson('/clear_queue', {});
       } catch (e) {}
 
+      // Keep CLEARED notification visible for 3.5s before fading
       setTimeout(() => {
         queueOverlayItems = [];
         renderQueueOverlay();
         const overlay = document.getElementById('remoteQueueOverlay');
         if (overlay) overlay.classList.remove('visible');
-      }, 750);
+      }, 3500);
     }
 
     function sendCmd(keyName, btnId) {
       showTapFeedback(keyName, btnId);
       setStatus('[OK] ' + keyName.toUpperCase(), 'ok');
       logTerminal('REMOTE: ' + keyName);
+
+      const upperKey = keyName.toUpperCase();
+      const isEmergency = ['BACK', 'ESCAPE', 'CLEAR_QUEUE', 'MEDIA_PLAY_PAUSE', 'PAUSE', 'STOP', 'HOME'].includes(upperKey);
+      const isDir = ['UP', 'DOWN', 'LEFT', 'RIGHT'].includes(upperKey);
+      const lastActive = queueOverlayItems.filter(i => i.status === 'active').pop();
+
+      // Preemptive visual preemption: if emergency key or switching direction, mark existing active items purged
+      if (isEmergency || (isDir && lastActive && lastActive.key !== upperKey && ['UP', 'DOWN', 'LEFT', 'RIGHT'].includes(lastActive.key))) {
+        queueOverlayItems.forEach(i => {
+          if (i.status === 'active') i.status = 'cleared';
+        });
+        renderQueueOverlay();
+      }
 
       const qId = pushQueueOverlayItem(keyName);
 
@@ -4300,8 +4315,8 @@
         if (e.button !== undefined && e.button !== 0) return;
         el.classList.add('pressed');
 
-        // Engage repeat glide: 85ms in mouse mode, 160ms in grid mode
-        const intervalMs = mouseMode ? 85 : 160;
+        // Engage repeat glide: 85ms in mouse mode, 220ms in grid mode
+        const intervalMs = mouseMode ? 85 : 220;
         holdTimer = setTimeout(() => {
           repeatInterval = setInterval(() => {
             if (repeatActionFn) repeatActionFn();
@@ -5380,8 +5395,25 @@
         const action = activeKeyMap[e.key];
         if (action === 'OPEN_SETTINGS') {
           openSettingsModal();
+        } else if (action === 'CLEAR_QUEUE') {
+          clearCommandQueue();
         } else {
+          if (e.repeat) return; // Drop unthrottled browser 30Hz auto-repeat floods
+
           sendCmd(action);
+
+          // For directional navigation keys, manage hold-to-repeat smoothly at 220ms
+          if (['UP', 'DOWN', 'LEFT', 'RIGHT'].includes(action)) {
+            if (!heldKeyMap.has(e.key)) {
+              const tHold = setTimeout(() => {
+                const tInterval = setInterval(() => {
+                  sendCmd(action);
+                }, 220);
+                heldKeyMap.set(e.key, { timeout: null, interval: tInterval });
+              }, 260);
+              heldKeyMap.set(e.key, { timeout: tHold, interval: null });
+            }
+          }
         }
       }
     });

@@ -100,9 +100,10 @@ For lightweight environments without Python:
 - **Standalone Single-File Web UI (`index.html`)**: Self-contained HTML5 interface with embedded CSS and JavaScript. Zero bundlers, zero npm dependencies, and zero build steps.
 - **Mobile & Desktop Optimized**: Responsive virtual remote for smartphones and full command control panel for desktop workstations.
 - **Directional Navigation**: D-Pad (Up, Down, Left, Right, OK, Back, Home, Menu, Settings) over persistent ADB shell pipes for sub-10ms response.
+- **Preemptive Command Interruption & Agile D-Pad Navigation**: Instant directional reversal and seek interruption (e.g. `->->->->->->-><-<-->-><-`), Escape key emergency pipeline purge, and burst flood guard preventing buffer bloat.
 - **Virtual Touchpad & Hardware Cursor**: Smooth mouse motion, tap-to-click, wheel scrolling, and hardware cursor toggle for projector pointer modes.
 - **Core Launchers with Deep-Linking (`⋮`)**: Top-right kebab action menus on YouTube and Browser cards for 1-click video link casting, direct search, and URL opening.
-- **Ambient Floating Command Stream Overlay**: Live, non-distracting pill stream of in-flight commands with an instant cancellation purge button.
+- **Ambient Floating Command Stream Overlay**: Live, non-distracting pill stream of in-flight commands with 4-second diagnostic persistence and instant cancellation purge.
 - **Audio & Power Controls**: Volume up, volume down, mute toggle, and power/standby switches.
 - **Instant Keyboard Text Injection**: Stream text strings directly into Android search bars and login inputs without on-screen keyboard typing fatigue.
 - **App Shortcuts**: 1-click launchers for YouTube, Netflix, Prime Video, Browser, HDMI Source Switcher, Settings, and Cast/Miracast.
