@@ -417,3 +417,25 @@ To deliver instantaneous directional agility (e.g. `-> -> -> -> -> -> -> <- <- -
    - Idle fade timeout extended to 4.0 seconds (up from 1.3s).
    - Emergency purge notice remains visible for 3.5 seconds (up from 750ms).
    - Switching direction visually transitions pending active pills to `PURGED` instantly.
+
+---
+
+## 8. Stealth Network Presence Discovery & Multi-Device Connection (Updated)
+
+To discover all devices in the network without noisy, brute-force subnet sweeps:
+1. **OS ARP Cache Neighbor Extraction**: Stealthily reads `arp -a` to extract all currently awake network neighbors (IP and MAC) across local interfaces.
+2. **SSDP Multicast Room Query**: Broadcasts an SSDP `M-SEARCH *` datagram to UDP port `1900` (`239.255.255.250`) to collect UPnP, DLNA, and smart TV identifiers without generating port scan noise.
+3. **Smart Android Heuristic Ranking**:
+   - Concurrently probes discovered candidate IPs across ports `5555` (ADB daemon), `8008`/`8009` (Google Cast), and `6466` (Android TV Remote v2).
+   - Classifies and scores hosts:
+     - **ADB Ready (Score 100)**: Port 5555 responsive. Tagged as `RECOMMENDED • ADB` and pinned to the top of the list.
+     - **Android TV / Cast (Score 70)**: Google Cast or Android TV Remote responsive. Tagged as `ANDROID TV`.
+     - **Active Network Hosts (Score 25)**: Standard network equipment or PCs. Tagged as `DEVICE`.
+     - **Default Gateway (Score 10)**: Router interface. Tagged as `ROUTER`.
+4. **Interactive Multi-Device Connection UI**:
+   - The Connection Settings modal dynamically displays all discovered network devices with IP, MAC, and role badges.
+   - Users can connect to any device via one-click **Connect** or load its IP via **Select**.
+   - `saveAndConnect()` actively invokes `/connect` to ensure target switching takes effect immediately.
+5. **Mouse Mode Elimination**:
+   - All mouse mode toggles, virtual cursor tracking, Win32 ctypes cursor poller, and mouse endpoints (`/mouse`, `/mouse_rel`, `/mouse_click`, `/mouse_wheel`, `/cursor_toggle`, `/ping_cursor`, `/dismiss_cursor`) have been completely purged.
+   - The UI provides clean D-Pad and directional tactile navigation with low-latency key event pipelines.

@@ -1,7 +1,6 @@
 """Universal Android TV & Projector Remote - Desktop Command Control Panel
 High-performance, low-latency web remote with native Linux kernel sendevent streaming,
-dynamic input device discovery, hardware cursor tracking, on-screen pointer toggle,
-mouse-wheel scrolling, command terminal with history, configurable hotkeys, and desktop UI.
+dynamic input device discovery, command terminal with history, configurable hotkeys, and desktop UI.
 """
 
 import argparse
@@ -61,7 +60,6 @@ LINUX_KEY_CODES = {
     "vol_down": 114,
     "mute": 113,
     "power": 116,
-    "mouse": 122,  # KEYCODE_MOVE_HOME (HY300 Hardware Remote's Mouse Arrow Toggle)
 }
 
 # Android Keymap with Universal TV Aliases
@@ -92,7 +90,6 @@ KEYMAP = {
     "volumedown": "KEYCODE_VOLUME_DOWN",
     "menu": "KEYCODE_MENU",
     "recents": "KEYCODE_APP_SWITCH",
-    "mouse": "KEYCODE_MOVE_HOME",
     "airplay": "KEYCODE_MEDIA_PLAY",
     "miracast": "KEYCODE_MEDIA_FAST_FORWARD",
     "play": "KEYCODE_MEDIA_PLAY_PAUSE",
@@ -121,26 +118,7 @@ EMERGENCY_BRAKE_KEYS = {
 }
 
 # ---------------------------------------------------------------------------
-# Win32 Hardware Cursor Tracking
-# ---------------------------------------------------------------------------
-WINDOWS_USER32 = ctypes.windll.user32 if os.name == "nt" else None
-
-
-class POINT(ctypes.Structure):
-    _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
-
-
-def get_cursor_pos():
-    if WINDOWS_USER32 is None:
-        return None
-    point = POINT()
-    if WINDOWS_USER32.GetCursorPos(ctypes.byref(point)):
-        return point.x, point.y
-    return None
-
-
-# ---------------------------------------------------------------------------
-# Subnet Auto-Discovery Engine
+# Stealth Network Presence & Android Auto-Discovery Engine
 # ---------------------------------------------------------------------------
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -153,37 +131,218 @@ def get_local_ip():
         s.close()
 
 
-def probe_port(ip, timeout=0.15):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def shout_ssdp_discovery(timeout=0.6):
+    """Stealthily shouts an SSDP M-SEARCH broadcast into the room to discover smart TVs and media devices."""
+    devices = {}
+    msg = (
+        'M-SEARCH * HTTP/1.1\r\n'
+        'HOST: 239.255.255.250:1900\r\n'
+        'MAN: "ssdp:discover"\r\n'
+        'MX: 1\r\n'
+        'ST: ssdp:all\r\n\r\n'
+    )
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     s.settimeout(timeout)
     try:
-        if s.connect_ex((ip, 5555)) == 0:
-            return ip
+        s.sendto(msg.encode(), ('239.255.255.250', 1900))
+        start_t = time.time()
+        while time.time() - start_t < timeout:
+            try:
+                data, addr = s.recvfrom(2048)
+                ip = addr[0]
+                text_resp = data.decode(errors='ignore')
+                hint = "Smart Device"
+                for line in text_resp.splitlines():
+                    if line.upper().startswith("SERVER:") or line.upper().startswith("ST:"):
+                        hint = line.split(":", 1)[1].strip()
+                        break
+                devices[ip] = hint
+            except socket.timeout:
+                break
+            except Exception:
+                pass
     except Exception:
         pass
     finally:
         s.close()
-    return None
+    return devices
+
+
+def get_arp_neighbors():
+    """Stealthily reads local network neighbors from the operating system ARP cache."""
+    neighbors = []
+    try:
+        out = subprocess.check_output(['arp', '-a'], text=True, errors='ignore')
+        current_iface = None
+        for line in out.splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            if 'Interface:' in line:
+                m = re.search(r'Interface:\s*([\d\.]+)', line)
+                current_iface = m.group(1) if m else None
+                continue
+            parts = re.split(r'\s+', line)
+            if len(parts) >= 3:
+                ip, mac, typ = parts[0], parts[1], parts[2]
+                if re.match(r'^\d+\.\d+\.\d+\.\d+$', ip):
+                    octets = [int(x) for x in ip.split('.')]
+                    # Exclude multicast and broadcast ranges
+                    if octets[0] >= 224 or octets[3] in (0, 255):
+                        continue
+                    neighbors.append({
+                        'ip': ip,
+                        'mac': mac.upper().replace('-', ':'),
+                        'type': typ,
+                        'iface': current_iface
+                    })
+    except Exception:
+        pass
+    return neighbors
+
+
+def check_tcp_port(ip, port, timeout=0.35):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.settimeout(timeout)
+    try:
+        s.connect((ip, port))
+        return True
+    except (socket.timeout, OSError):
+        return False
+    finally:
+        s.close()
+
+
+def probe_device_services(ip, timeout=0.35):
+    """Probes characteristic ports to determine device identity and ADB capability."""
+    services = {"adb": False, "cast": False, "tv_remote": False}
+    
+    # 1. Probe port 5555 (ADB daemon)
+    services["adb"] = check_tcp_port(ip, 5555, timeout=timeout)
+
+    # 2. Probe ports 8008/8009 (Google Cast / Chromecast)
+    for port in (8008, 8009):
+        if check_tcp_port(ip, port, timeout=timeout):
+            services["cast"] = True
+            break
+
+    # 3. Probe port 6466 (Android TV Remote v2)
+    services["tv_remote"] = check_tcp_port(ip, 6466, timeout=timeout)
+
+    return services
+
+
+def discover_network_devices(base_ip=None, current_target_ip=None):
+    """Discovers active devices on the network using ARP and SSDP,
+    then evaluates which one is most likely an Android device to recommend first.
+    """
+    ssdp_devices = shout_ssdp_discovery(timeout=0.4)
+    arp_neighbors = get_arp_neighbors()
+
+    # Consolidate candidate IPs
+    candidate_map = {}
+    for n in arp_neighbors:
+        candidate_map[n['ip']] = {
+            'ip': n['ip'],
+            'mac': n['mac'],
+            'type': n['type'],
+            'ssdp': ssdp_devices.get(n['ip'], '')
+        }
+
+    for s_ip, s_hint in ssdp_devices.items():
+        if s_ip not in candidate_map:
+            candidate_map[s_ip] = {
+                'ip': s_ip,
+                'mac': 'Unknown',
+                'type': 'dynamic',
+                'ssdp': s_hint
+            }
+
+    # Include base_ip or current target IP if provided
+    for extra_ip in (base_ip, current_target_ip):
+        if extra_ip and extra_ip not in ("127.0.0.1", ""):
+            if extra_ip not in candidate_map:
+                candidate_map[extra_ip] = {
+                    'ip': extra_ip,
+                    'mac': 'Configured Target',
+                    'type': 'static',
+                    'ssdp': ssdp_devices.get(extra_ip, '')
+                }
+
+    # Parallel service probe for all candidate IPs
+    def inspect_candidate(item):
+        ip = item['ip']
+        srv = probe_device_services(ip)
+        item['services'] = srv
+        
+        score = 0
+        desc = "Network Device"
+        badge = "ACTIVE"
+        is_android = False
+
+        if srv['adb']:
+            score += 100
+            desc = "Android Device (ADB Port 5555 Open)"
+            badge = "RECOMMENDED"
+            is_android = True
+        elif srv['tv_remote'] or srv['cast'] or 'Android' in item.get('ssdp', '') or 'Google' in item.get('ssdp', ''):
+            score += 70
+            desc = "Android TV / Google Cast Device"
+            badge = "ANDROID TV"
+            is_android = True
+        elif ip.endswith('.1') or ip.endswith('.254'):
+            score += 10
+            desc = "Default Gateway / Router"
+            badge = "ROUTER"
+        else:
+            score += 25
+            desc = item.get('ssdp') or "Active Network Host"
+            badge = "DEVICE"
+
+        if current_target_ip and ip == current_target_ip:
+            item['is_current'] = True
+            score += 5
+        else:
+            item['is_current'] = False
+
+        item['score'] = score
+        item['description'] = desc
+        item['badge'] = badge
+        item['is_android'] = is_android
+        item['adb_ready'] = srv['adb']
+        return item
+
+    results = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=30) as executor:
+        futures = [executor.submit(inspect_candidate, item) for item in candidate_map.values()]
+        for f in concurrent.futures.as_completed(futures):
+            try:
+                results.append(f.result())
+            except Exception:
+                pass
+
+    # Sort so the highest-scoring (Android / ADB-ready) devices are recommended first
+    def sort_key(d):
+        octets = [0, 0, 0, 0]
+        try:
+            octets = [int(p) for p in d['ip'].split('.')]
+        except Exception:
+            pass
+        return (-d['score'], octets)
+
+    results.sort(key=sort_key)
+    return results
+
+
+def probe_port(ip, timeout=0.30):
+    return ip if check_tcp_port(ip, 5555, timeout=timeout) else None
 
 
 def scan_subnet_for_adb(base_ip=None):
-    if not base_ip:
-        base_ip = get_local_ip()
-    parts = base_ip.split(".")
-    if len(parts) != 4 or base_ip == "127.0.0.1":
-        return []
-
-    prefix = ".".join(parts[:3])
-    targets = [f"{prefix}.{i}" for i in range(1, 255)]
-    found = []
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
-        futures = {executor.submit(probe_port, ip): ip for ip in targets}
-        for future in concurrent.futures.as_completed(futures):
-            res = future.result()
-            if res:
-                found.append(res)
-    return found
+    """Backwards-compatible call: returns list of IPs with port 5555 open."""
+    devices = discover_network_devices(base_ip=base_ip)
+    return [d['ip'] for d in devices if d.get('adb_ready')]
 
 
 # ---------------------------------------------------------------------------
@@ -196,13 +355,7 @@ class AdbController:
         self.lock = threading.Lock()
         self.shell_proc = None
         self.is_connected = False
-        self.physical_mouse_active = False
-        self.visual_touches_enabled = False
         self.input_device = "/dev/input/event7"  # IR remote control node
-        self.mouse_device = "/dev/input/event7"  # Relative mouse node
-        self.cursor_x = PROJECTOR_WIDTH // 2
-        self.cursor_y = PROJECTOR_HEIGHT // 2
-        self.mouse_worker_in_flight = False
         self.scrcpy_proc = None
         self.last_key_name = None
         self.last_key_time = 0.0
@@ -296,7 +449,7 @@ class AdbController:
         }
 
     def _detect_input_devices(self):
-        """Scans /proc/bus/input/devices, prioritizing IR handlers for keys and pointer handlers for mouse."""
+        """Scans /proc/bus/input/devices, prioritizing IR and remote handlers for keys."""
         self.detected_devices = []
         try:
             res = subprocess.run(
@@ -305,53 +458,39 @@ class AdbController:
                 text=True,
                 timeout=3,
             )
-            text = res.stdout
-            if text:
-                blocks = text.strip().split("\n\n")
+            raw = res.stdout
+            if raw:
+                blocks = raw.strip().split("\n\n")
                 ir_dev = None
-                mouse_dev = None
                 for block in blocks:
                     name_match = re.search(r'N:\s*Name="([^"]+)"', block)
                     handler_match = re.search(r"H:\s*Handlers=.*?(event\d+)", block)
-                    has_rel = "REL=" in block or "mouse" in block.lower()
                     if handler_match:
                         ev_name = handler_match.group(1)
                         dev_path = f"/dev/input/{ev_name}"
                         dev_name = name_match.group(1) if name_match else ev_name
-                        is_mouse = has_rel or "mouse" in dev_name.lower()
-                        is_ir = "sunxi-ir" in dev_name.lower() or "ir" in dev_name.lower()
+                        is_ir = "sunxi-ir" in dev_name.lower() or "ir" in dev_name.lower() or "remote" in dev_name.lower()
                         self.detected_devices.append({
                             "path": dev_path,
                             "name": dev_name,
-                            "is_mouse": is_mouse,
                             "is_ir": is_ir,
                         })
                         if is_ir and not ir_dev:
                             ir_dev = dev_path
-                        if is_mouse and not mouse_dev:
-                            mouse_dev = dev_path
 
                 if ir_dev:
                     self.input_device = ir_dev
-                elif mouse_dev:
-                    self.input_device = mouse_dev
-
-                if mouse_dev:
-                    self.mouse_device = mouse_dev
-                else:
-                    self.mouse_device = self.input_device
+                elif self.detected_devices:
+                    self.input_device = self.detected_devices[0]["path"]
         except Exception:
             pass
 
         if not self.input_device:
             self.input_device = "/dev/input/event7"
-        if not self.mouse_device:
-            self.mouse_device = self.input_device
 
     def set_input_device(self, dev_path):
         if dev_path.startswith("/dev/input/event"):
             self.input_device = dev_path
-            self.mouse_device = dev_path
             return True
         return False
 
@@ -481,75 +620,6 @@ class AdbController:
 
         # Route through persistent shell pipe — eliminates subprocess spawn + ADB handshake per key.
         return self.send_shell_command(f"input keyevent {keycode}")
-
-    def send_relative_mouse(self, dx, dy):
-        idx = int(dx)
-        idy = int(dy)
-        if idx == 0 and idy == 0:
-            return True
-
-        self.cursor_x = max(0, min(PROJECTOR_WIDTH - 1, self.cursor_x + idx))
-        self.cursor_y = max(0, min(PROJECTOR_HEIGHT - 1, self.cursor_y + idy))
-
-        # Zero-latency persistent shell pipe dispatch (<0.2ms write time)
-        # Emits kernel EV_REL 0=REL_X, 1=REL_Y, EV_SYN 0=SYN_REPORT directly to uinput node
-        pipe_cmd = f"sendevent /dev/input/event7 2 0 {idx}\nsendevent /dev/input/event7 2 1 {idy}\nsendevent /dev/input/event7 0 0 0"
-        ok = self.send_shell_command(pipe_cmd, allow_fallback=False)
-        if not ok:
-            # Fallback to direct subprocess if pipe dropped
-            fallback_cmd = f"sendevent /dev/input/event7 2 0 {idx}; sendevent /dev/input/event7 2 1 {idy}; sendevent /dev/input/event7 0 0 0"
-            ok = self.send_shell_command(fallback_cmd, allow_fallback=True)
-        return ok
-
-    def send_mouse_click(self):
-        """Dispatches on-screen mouse click at the current cursor coordinates."""
-        cx = int(self.cursor_x)
-        cy = int(self.cursor_y)
-        # Native hardware BTN_MOUSE (EV_KEY 0x110 / 272) click on uinput mouse node with fallback
-        cmd = (
-            "sendevent /dev/input/event7 1 272 1 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null; "
-            "sendevent /dev/input/event7 1 272 0 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null || "
-            f"input mouse tap {cx} {cy} || input tap {cx} {cy} || input keyevent KEYCODE_DPAD_CENTER"
-        )
-        return self.send_shell_command(cmd, allow_fallback=True)
-
-    def send_mouse_wheel(self, delta):
-        val = int(delta)
-        if val == 0:
-            return True
-        key = "KEYCODE_PAGE_UP" if val > 0 else "KEYCODE_PAGE_DOWN"
-        return self.send_key(key)
-
-    def toggle_remote_mouse(self):
-        """Toggles the hardware mouse arrow on the projector/TV screen."""
-        if not self.physical_mouse_active:
-            return self.ping_cursor()
-        else:
-            return self.dismiss_cursor()
-
-    def ping_cursor(self):
-        """Wakes up and reveals the on-screen cursor on the projector display."""
-        self.physical_mouse_active = True
-        self.visual_touches_enabled = True
-        # Pulse KEY 232 (MOUSE toggle defined in sunxi-ir-uinput.kl) and relative micro-nudge to display arrow
-        cmd = (
-            "sendevent /dev/input/event7 1 232 1 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null; "
-            "sendevent /dev/input/event7 1 232 0 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null; "
-            "sendevent /dev/input/event7 2 0 1 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null; "
-            "sendevent /dev/input/event7 2 0 -1 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null"
-        )
-        return self.send_shell_command(cmd, allow_fallback=True)
-
-    def dismiss_cursor(self):
-        """Hides and dismisses the on-screen mouse pointer and restores grid navigation."""
-        self.physical_mouse_active = False
-        self.visual_touches_enabled = False
-        # Pulse KEY 232 to dismiss the hardware pointer
-        cmd = (
-            "sendevent /dev/input/event7 1 232 1 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null; "
-            "sendevent /dev/input/event7 1 232 0 2>/dev/null; sendevent /dev/input/event7 0 0 0 2>/dev/null"
-        )
-        return self.send_shell_command(cmd, allow_fallback=True)
 
     def capture_screenshot(self):
         """Captures on-screen display via adb exec-out screencap -p in memory.
@@ -877,15 +947,7 @@ class AdbController:
                 link = step if (norm.startswith("http:") or norm.startswith("https:")) else step.split(":", 1)[1].strip()
                 self.open_deeplink(link, target="chrome")
                 executed.append(f"URL:{link}")
-            elif norm == "cursor" or norm == "mouse":
-                self.toggle_remote_mouse()
-                executed.append("TOGGLE:CURSOR")
-            elif norm == "ping_cursor":
-                self.ping_cursor()
-                executed.append("PULSE:CURSOR")
-            elif norm in ("dismiss_cursor", "hide_cursor", "cursor_off", "mouse_off"):
-                self.dismiss_cursor()
-                executed.append("DISMISS:CURSOR")
+
             elif any(norm.startswith(prefix) for prefix in ("input ", "monkey ", "am ", "pm ", "settings ", "sendevent ")):
                 self.send_shell_command(step)
                 executed.append(f"RAW:{step}")
@@ -1409,52 +1471,6 @@ controller = AdbController(ADB_PATH, DEFAULT_IP)
 
 
 # ---------------------------------------------------------------------------
-# Background Physical Cursor Poller
-# ---------------------------------------------------------------------------
-def send_mouse_move(dx, dy):
-    if not dx and not dy or not controller.is_connected:
-        return
-
-    # Dynamic mouse motion scaling
-    scale = 5
-    x1 = PROJECTOR_WIDTH // 2
-    y1 = PROJECTOR_HEIGHT // 2
-    x2 = max(0, min(PROJECTOR_WIDTH - 1, x1 + int(dx * scale)))
-    y2 = max(0, min(PROJECTOR_HEIGHT - 1, y1 + int(dy * scale)))
-
-    controller.send_shell_command(
-        f"input mouse swipe {x1} {y1} {x2} {y2} 50 || input swipe {x1} {y1} {x2} {y2} 50",
-        allow_fallback=True
-    )
-
-
-def physical_mouse_worker():
-    previous = get_cursor_pos()
-
-    while True:
-        time.sleep(0.035)
-
-        if not controller.physical_mouse_active or not controller.is_connected:
-            previous = get_cursor_pos()
-            continue
-
-        current = get_cursor_pos()
-        if current is None:
-            continue
-
-        if previous is None:
-            previous = current
-            continue
-
-        dx = current[0] - previous[0]
-        dy = current[1] - previous[1]
-        previous = current
-
-        if dx or dy:
-            send_mouse_move(dx, dy)
-
-
-# ---------------------------------------------------------------------------
 # Desktop Workstation Control Panel Interface
 # ---------------------------------------------------------------------------
 def load_html_page():
@@ -1493,8 +1509,6 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
                 {
                     "connected": controller.is_connected,
                     "ip": controller.target_ip,
-                    "mouse_active": controller.physical_mouse_active,
-                    "touches_active": controller.visual_touches_enabled,
                     "input_device": controller.input_device,
                     "devices": getattr(controller, "detected_devices", []),
                 }
@@ -1639,7 +1653,7 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
             return
 
         body = self._read_json()
-        if body is None and path_only not in ("/scan", "/cursor_toggle", "/touches_toggle", "/mouse_click", "/ping_cursor", "/dismiss_cursor"):
+        if body is None and path_only not in ("/scan", "/touches_toggle"):
             body = {}
 
         if path_only == "/cmd":
@@ -1667,71 +1681,6 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
             cmd_str = body.get("command", "")
             executed = controller.run_custom_command(cmd_str)
             self._json({"ok": True, "executed": executed})
-        elif path_only == "/mouse":
-            if not body:
-                body = {}
-            action = body.get("action")
-            if action == "tap":
-                x = self._bounded_int(body.get("x", PROJECTOR_WIDTH // 2), 0, PROJECTOR_WIDTH - 1)
-                y = self._bounded_int(body.get("y", PROJECTOR_HEIGHT // 2), 0, PROJECTOR_HEIGHT - 1)
-                controller.cursor_x = x
-                controller.cursor_y = y
-                ok = controller.send_shell_command(
-                    f"input mouse tap {x} {y} || input tap {x} {y}",
-                    allow_fallback=True
-                )
-                self._json({"ok": ok})
-                return
-
-            if action == "swipe":
-                x1 = self._bounded_int(body.get("x1", 640), 0, PROJECTOR_WIDTH - 1)
-                y1 = self._bounded_int(body.get("y1", 360), 0, PROJECTOR_HEIGHT - 1)
-                x2 = self._bounded_int(body.get("x2", 640), 0, PROJECTOR_WIDTH - 1)
-                y2 = self._bounded_int(body.get("y2", 360), 0, PROJECTOR_HEIGHT - 1)
-                duration = self._bounded_int(body.get("duration", 100), 40, 1000)
-                controller.cursor_x = x2
-                controller.cursor_y = y2
-                ok = controller.send_shell_command(
-                    f"input mouse swipe {x1} {y1} {x2} {y2} {duration} || input swipe {x1} {y1} {x2} {y2} {duration}",
-                    allow_fallback=True
-                )
-                self._json({"ok": ok})
-                return
-
-            self._json({"ok": False, "error": "unknown mouse action"})
-            return
-
-        elif path_only == "/mouse_rel":
-            dx = body.get("dx", 0)
-            dy = body.get("dy", 0)
-            ok = controller.send_relative_mouse(dx, dy)
-            self._json({"ok": ok, "x": controller.cursor_x, "y": controller.cursor_y})
-
-        elif path_only == "/mouse_click":
-            ok = controller.send_mouse_click()
-            self._json({"ok": ok, "x": controller.cursor_x, "y": controller.cursor_y})
-
-        elif path_only == "/mouse_wheel":
-            delta = body.get("delta", 0)
-            ok = controller.send_mouse_wheel(delta)
-            self._json({"ok": ok})
-
-        elif path_only == "/cursor_toggle":
-            ok = controller.toggle_remote_mouse()
-            self._json({"ok": ok, "active": controller.physical_mouse_active, "x": controller.cursor_x, "y": controller.cursor_y})
-
-        elif path_only == "/ping_cursor":
-            ok = controller.ping_cursor()
-            self._json({"ok": ok, "active": controller.physical_mouse_active, "x": controller.cursor_x, "y": controller.cursor_y})
-
-        elif path_only == "/dismiss_cursor":
-            ok = controller.dismiss_cursor()
-            self._json({"ok": ok, "active": False, "x": controller.cursor_x, "y": controller.cursor_y})
-
-        elif path_only == "/touches_toggle":
-            ok = controller.toggle_visual_touches()
-            self._json({"ok": ok, "enabled": controller.visual_touches_enabled})
-
         elif path_only == "/set_device":
             dev_path = body.get("device", "")
             ok = controller.set_input_device(dev_path)
@@ -1741,19 +1690,6 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
             text_str = str(body.get("text", ""))
             ok = controller.send_text(text_str)
             self._json({"ok": ok})
-
-        elif path_only == "/mode":
-            mode = body.get("mode")
-            enabled = bool(body.get("enabled"))
-            if mode == "mouse":
-                if enabled:
-                    controller.physical_mouse_active = True
-                    controller.ping_cursor()
-                else:
-                    controller.dismiss_cursor()
-                self._json({"ok": True, "enabled": enabled})
-            else:
-                self._json({"ok": False, "error": "unknown mode"})
 
         elif path_only == "/app":
             app_type = body.get("app")
@@ -1784,11 +1720,31 @@ class MasterHandler(http.server.BaseHTTPRequestHandler):
         elif path_only == "/connect":
             ip = body.get("ip", DEFAULT_IP)
             connected = controller.connect(ip)
-            self._json({"ok": True, "connected": connected, "ip": ip})
+            self._json({
+                "ok": True,
+                "connected": connected,
+                "ip": ip,
+                "input_device": controller.input_device
+            })
 
         elif path_only == "/scan":
-            found = scan_subnet_for_adb()
-            self._json({"ok": True, "found": found})
+            base_ip = body.get("base_ip") or body.get("ip")
+            devices = discover_network_devices(base_ip=base_ip, current_target_ip=controller.target_ip)
+            adb_found = [d['ip'] for d in devices if d.get('adb_ready')]
+            recommended = None
+            for d in devices:
+                if d.get('is_android'):
+                    recommended = d['ip']
+                    break
+            if not recommended and adb_found:
+                recommended = adb_found[0]
+            self._json({
+                "ok": True,
+                "devices": devices,
+                "found": adb_found,
+                "recommended": recommended,
+                "current_ip": controller.target_ip
+            })
 
         else:
             self.send_error(404)
@@ -1852,15 +1808,16 @@ def main():
     if direct_active:
         print(f"[DISCOVERY] Target {target_ip}:5555 is responsive. Bypassing full subnet scan.")
     elif not args.no_scan:
-        print(f"[DISCOVERY] Target {target_ip} did not reply immediately; sweeping local subnet...")
-        discovered = scan_subnet_for_adb()
-        if discovered:
-            print(f"[DISCOVERY] Found ADB target(s): {', '.join(discovered)}")
-            if target_ip not in discovered:
-                target_ip = discovered[0]
-                print(f"[DISCOVERY] Switching to active target: {target_ip}")
+        print(f"[DISCOVERY] Target {target_ip} did not reply immediately; detecting active devices in the network...")
+        devices = discover_network_devices(base_ip=target_ip, current_target_ip=target_ip)
+        adb_devices = [d['ip'] for d in devices if d.get('adb_ready')]
+        if adb_devices:
+            print(f"[DISCOVERY] Found active ADB target(s): {', '.join(adb_devices)}")
+            if target_ip not in adb_devices:
+                target_ip = adb_devices[0]
+                print(f"[DISCOVERY] Recommended target selected: {target_ip}")
         else:
-            print(f"[DISCOVERY] No active probe reply; falling back to {target_ip}")
+            print(f"[DISCOVERY] No active ADB target replied; staying on configured {target_ip}")
 
     print(f"[ADB] Connecting to {target_ip}:5555...")
     connected = controller.connect(target_ip)
@@ -1869,10 +1826,7 @@ def main():
     else:
         print("[ADB] Warning: Could not connect immediately. You can reconfigure via UI.")
 
-    if os.name == "nt":
-        cursor_thread = threading.Thread(target=physical_mouse_worker, daemon=True)
-        cursor_thread.start()
-        print("[MOUSE] Win32 hardware cursor tracking worker initialized.")
+
 
     server_address = ("0.0.0.0", args.port)
     try:
@@ -1885,7 +1839,6 @@ def main():
     print(f"[READY] Web interface serving at: {url}")
     print("  - Hotkeys: 'O' = Settings, 'Y' = YouTube, 'M' = Mute, etc.")
     print("  - Custom command line enabled (e.g. 'UP, RIGHT, OK')")
-    print("  - Mouse wheel scrolling enabled on trackpad")
     print("  - Press Ctrl+C in console to stop server")
 
     if not args.no_browser:

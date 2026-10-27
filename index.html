@@ -256,12 +256,7 @@
       transition: all 0.2s ease;
     }
 
-    .mode-indicator-chip.mouse-active {
-      color: var(--cinema-amber);
-      border-color: var(--cinema-amber);
-      background: rgba(245, 158, 11, 0.12);
-      box-shadow: 0 0 10px var(--cinema-amber-glow);
-    }
+    
 
     /* Remote Grid Rows */
     .remote-row {
@@ -329,17 +324,9 @@
       box-shadow: 0 0 16px var(--cinema-ruby-glow);
     }
 
-    .btn-mouse-toggle {
-      border-color: rgba(255, 255, 255, 0.08);
-    }
+    
 
-    .btn-mouse-toggle.active {
-      background: linear-gradient(145deg, #d97706, #b45309) !important;
-      border: 1px solid rgba(255, 255, 255, 0.22) !important;
-      border-bottom: 2px solid rgba(0, 0, 0, 0.45) !important;
-      color: #ffffff !important;
-      box-shadow: 0 0 16px var(--cinema-amber-glow), inset 0 1px 1px rgba(255, 255, 255, 0.25) !important;
-    }
+    
 
     /* Concentric Milled D-Pad */
     .dpad-container {
@@ -2347,16 +2334,9 @@
       text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
     }
 
-    /* D-Pad Mouse Mode Visual Overlay */
-    .dpad-container.mouse-active-deck {
-      box-shadow: 0 0 0 2px var(--cinema-amber), 0 0 25px var(--cinema-amber-glow) !important;
-    }
+    
 
-    .dpad-container.mouse-active-deck .dpad-center {
-      background: #242c3d !important;
-      border-color: var(--cinema-amber) !important;
-      color: var(--cinema-amber) !important;
-    }
+    
 
     /* Tactile Tap Pulse Animation */
     .tap-flash {
@@ -2900,6 +2880,85 @@
       color: #777777;
       font-size: 13px;
     }
+    /* Network Device Discovery List */
+    .network-device-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 8px;
+      max-height: 220px;
+      overflow-y: auto;
+      padding-right: 2px;
+    }
+    .network-device-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--cinema-border);
+      border-radius: var(--radius-sm);
+      transition: all 0.15s ease;
+    }
+    .network-device-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .network-device-card.recommended {
+      border-color: rgba(16, 185, 129, 0.5);
+      background: rgba(16, 185, 129, 0.07);
+    }
+    .network-device-card.active-target {
+      border-color: rgba(0, 243, 255, 0.5);
+      background: rgba(0, 243, 255, 0.05);
+    }
+    .device-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .badge-recommended {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+    .badge-android-tv {
+      background: rgba(56, 189, 248, 0.2);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+    }
+    .badge-device {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-secondary);
+    }
+    .badge-current {
+      background: rgba(0, 243, 255, 0.2);
+      color: var(--cinema-cyan);
+      border: 1px solid rgba(0, 243, 255, 0.4);
+    }
+    .device-action-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+      background: var(--cinema-cyan);
+      color: #000;
+      transition: transform 0.1s, opacity 0.1s;
+    }
+    .device-action-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    .device-action-btn.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+      border: 1px solid var(--cinema-border);
+    }
+
   </style>
 </head>
 
@@ -3019,8 +3078,8 @@
         </button>
       </div>
 
-      <!-- Row 2: AirPlay + Mouse Mode Toggle + Miracast (3 buttons) -->
-      <div class="remote-row row-3col">
+      <!-- Row 2: AirPlay + Miracast Cast Launchers -->
+      <div class="remote-row row-2col">
         <button class="tactile-btn" id="btnAirplay" onclick="launchApp('airplay', 'btnAirplay')"
           title="AirPlay / iOS Mirroring">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -3028,13 +3087,6 @@
             <polygon points="12 15 17 21 7 21 12 15"></polygon>
           </svg>
           <span>AIRPLAY</span>
-        </button>
-        <button class="tactile-btn btn-mouse-toggle" id="btnMouseToggle" onclick="toggleMouse()"
-          title="Toggle Mouse Mode (Physical Cursor & Touchpad)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"></path>
-          </svg>
-          <span id="mouseToggleText">MOUSE</span>
         </button>
         <button class="tactile-btn" id="btnMiracast" onclick="launchApp('miracast', 'btnMiracast')"
           title="Miracast / Android Cast">
@@ -3064,7 +3116,7 @@
             <span class="dpad-text">RIGHT</span>
           </button>
         </div>
-        <button class="dpad-center" id="btnOk" onclick="handleOkAction()" title="Center OK (DPAD Select / Mouse Click)">
+        <button class="dpad-center" id="btnOk" onclick="handleOkAction()" title="Center OK (DPAD Select)">
           <span id="okMainLabel">OK</span>
           <span id="okSubLabel" style="font-size:9px; color:var(--text-muted); font-weight:400;">SELECT</span>
         </button>
@@ -3194,7 +3246,7 @@
                 <span class="scrcpy-status-tag" id="scrcpyStatusTag">MIRROR STANDBY</span>
               </div>
               <div class="scrcpy-card-title">60 FPS Ultra-Low Latency Mirror</div>
-              <div class="scrcpy-card-desc">Zero-lag native desktop mirror with full mouse and keyboard pass-through (sub-50ms latency).</div>
+              <div class="scrcpy-card-desc">Zero-lag native desktop mirror with keyboard and touch pass-through (sub-50ms latency).</div>
             </div>
             <div class="scrcpy-card-actions">
               <button class="btn-scrcpy-primary" id="btnLaunchScrcpy" onclick="toggleScrcpyMirror()" title="Launch native 60 FPS mirror window">
@@ -3744,16 +3796,11 @@
             <option value="">Auto-detected Nodes</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Pointer Event Node (Mouse)</label>
-          <input type="text" class="form-input" id="cfgMouseDevice" value="/dev/input/event1">
-        </div>
-        <div style="display:flex; gap:10px; margin-top:8px;">
+        <div style="display:flex; gap:10px; margin-top:10px;">
           <button class="send-btn" style="flex:1; height:38px;" onclick="saveAndConnect()">Save & Connect</button>
-          <button class="hdr-btn" style="height:38px; padding:0 14px;" onclick="runSubnetScan()">Scan Subnet</button>
+          <button class="hdr-btn" id="btnRunScan" style="height:38px; padding:0 14px;" onclick="runSubnetScan()">Scan Network</button>
         </div>
-        <div id="scanResultArea"
-          style="font-family:var(--font-mono); font-size:11px; color:var(--text-secondary); margin-top:4px;"></div>
+        <div id="scanResultArea" style="margin-top:8px;"></div>
       </div>
     </div>
   </div>
@@ -3845,12 +3892,10 @@
 
   <script>
     let targetIp = "192.168.100.5";
-    let mouseSens = 1.8;
     let audioEnabled = true;
     let audioCtx = null;
     let cmdHistory = [];
     let historyIdx = -1;
-    let physicalMouseModeActive = false;
 
     // Ultra-Low Latency Coalescing Pipeline
     let pendingRelX = 0;
@@ -3971,16 +4016,6 @@
       }
     }
 
-    function setSpeed(val) {
-      mouseSens = val;
-      ['sens1', 'sens2', 'sens3'].forEach(id => document.getElementById(id).classList.remove('active'));
-      if (val === 1.0) document.getElementById('sens1').classList.add('active');
-      if (val === 1.8) document.getElementById('sens2').classList.add('active');
-      if (val === 2.6) document.getElementById('sens3').classList.add('active');
-      playTone(520, 0.04);
-      showTapFeedback('SENS ' + val + 'x');
-    }
-
     // Polished Contextual Toast & Tap Feedback System
     let toastTimer = null;
     let chipTimer = null;
@@ -4022,7 +4057,7 @@
         if (chipTimer) clearTimeout(chipTimer);
         chipTimer = setTimeout(() => {
           chip.classList.remove('chip-sent');
-          chip.textContent = mouseMode ? 'MOUSE ON' : 'GRID FOCUS';
+          chip.textContent = 'GRID FOCUS';
         }, 900);
       }
     }
@@ -4198,10 +4233,6 @@
       }
     });
 
-    let mouseMode = false;
-    let virtualCursorX = 640;
-    let virtualCursorY = 360;
-
     function setStatus(msg, type) {
       const bar = document.getElementById('remoteStatusBar');
       const txt = document.getElementById('remoteStatusText');
@@ -4210,98 +4241,14 @@
       txt.textContent = msg;
     }
 
-    function updateCursorChip() {
-      const chip = document.getElementById('remoteModeChip');
-      if (!chip) return;
-      if (mouseMode) {
-        chip.textContent = `CURSOR: ${Math.round(virtualCursorX)},${Math.round(virtualCursorY)}`;
-        chip.classList.add('mouse-active');
-      } else {
-        chip.textContent = 'GRID FOCUS';
-        chip.classList.remove('mouse-active');
-      }
-    }
-
-    async function toggleMouse() {
-      mouseMode = !mouseMode;
-      physicalMouseModeActive = mouseMode;
-      const btn = document.getElementById('btnMouseToggle');
-      const chip = document.getElementById('remoteModeChip');
-      const dpadCont = document.querySelector('.dpad-container');
-      const okMain = document.getElementById('okMainLabel');
-      const okSub = document.getElementById('okSubLabel');
-
-      btn.classList.toggle('active', mouseMode);
-      chip.classList.toggle('mouse-active', mouseMode);
-      if (dpadCont) dpadCont.classList.toggle('mouse-active-deck', mouseMode);
-
-      if (mouseMode) {
-        updateCursorChip();
-        okMain.textContent = 'TAP';
-        okSub.textContent = 'CLICK';
-        playTone(740, 0.08);
-        showTapFeedback('CURSOR MODE', 'btnMouseToggle');
-        setStatus('HOLD ARROWS TO GLIDE • OK TO TAP', 'ok');
-        logTerminal('Cursor Mode ON: Controlled via Arrow Keys / D-Pad (Tap 36px, Hold glide 45px)');
-        await postJson('/ping_cursor', {});
-      } else {
-        chip.textContent = 'GRID FOCUS';
-        okMain.textContent = 'OK';
-        okSub.textContent = 'SELECT';
-        playTone(420, 0.08);
-        showTapFeedback('MOUSE OFF', 'btnMouseToggle');
-        setStatus('Grid navigation restored', 'ok');
-        logTerminal('Grid Navigation Restored');
-        await postJson('/dismiss_cursor', {});
-      }
-
-      const result = await postJson('/mode', { mode: 'mouse', enabled: mouseMode });
-      if (!result.ok) {
-        mouseMode = false;
-        physicalMouseModeActive = false;
-        btn.classList.remove('active');
-        chip.classList.remove('mouse-active');
-        if (dpadCont) dpadCont.classList.remove('mouse-active-deck');
-        setStatus('Mouse mode unavailable', 'err');
-      }
-    }
-
     function handleDpadAction(direction, isRepeat = false) {
       const btnMap = { 'UP': 'btnUp', 'DOWN': 'btnDown', 'LEFT': 'btnLeft', 'RIGHT': 'btnRight' };
       const btnId = btnMap[direction];
-
-      if (mouseMode) {
-        // Tap steps 36px; holding past 250ms glides 45px every 85ms
-        const step = isRepeat ? 45 : 36;
-        let dx = 0, dy = 0;
-        if (direction === 'UP') dy = -step;
-        else if (direction === 'DOWN') dy = step;
-        else if (direction === 'LEFT') dx = -step;
-        else if (direction === 'RIGHT') dx = step;
-
-        virtualCursorX = Math.max(0, Math.min(1279, virtualCursorX + dx));
-        virtualCursorY = Math.max(0, Math.min(719, virtualCursorY + dy));
-        updateCursorChip();
-
-        if (!isRepeat) {
-          showTapFeedback(direction, btnId);
-          setStatus(`[OK] CURSOR ${direction} (${Math.round(virtualCursorX)},${Math.round(virtualCursorY)})`, 'ok');
-        }
-
-        queueRelativeMouse(dx, dy);
-      } else {
-        sendCmd(direction, btnId);
-      }
+      sendCmd(direction, btnId);
     }
 
     function handleOkAction() {
-      if (mouseMode) {
-        showTapFeedback('CLICK', 'btnOk');
-        setStatus(`[OK] TAP (${Math.round(virtualCursorX)},${Math.round(virtualCursorY)})`, 'ok');
-        sendMouseClick();
-      } else {
-        sendCmd('OK', 'btnOk');
-      }
+      sendCmd('OK', 'btnOk');
     }
 
     // Hold-to-Repeat Controller with separate tap vs. glide rates
@@ -4315,13 +4262,11 @@
         if (e.button !== undefined && e.button !== 0) return;
         el.classList.add('pressed');
 
-        // Engage repeat glide: 85ms in mouse mode, 220ms in grid mode
-        const intervalMs = mouseMode ? 85 : 220;
         holdTimer = setTimeout(() => {
           repeatInterval = setInterval(() => {
             if (repeatActionFn) repeatActionFn();
             else actionFn();
-          }, intervalMs);
+          }, 220);
         }, 260);
       }
 
@@ -4583,30 +4528,6 @@
       }
     }
 
-    async function sendMouseClick() {
-      playTone(880, 0.04);
-      showTapFeedback('CLICK');
-      logTerminal('MOUSE CLICK');
-      await postJson('/mouse_click', {});
-    }
-
-    async function dismissCursor() {
-      playTone(350, 0.08);
-      logTerminal('DISMISS CURSOR');
-      const d = await postJson('/dismiss_cursor', {});
-      logTerminal('Pointer hidden: ' + (d.ok ? 'SUCCESS' : 'NO-OP'));
-      checkStatus();
-    }
-
-    async function pingCursor() {
-      playTone(720, 0.06);
-      logTerminal('WAKE POINTER');
-      showTapFeedback('POINTER ON');
-      const d = await postJson('/ping_cursor', {});
-      logTerminal('Pointer wake: ' + (d.ok ? 'SUCCESS' : 'ERR'));
-      checkStatus();
-    }
-
     async function sendStreamText() {
       const inp = document.getElementById('quickTextInput');
       const val = inp.value.trim();
@@ -4627,63 +4548,6 @@
       logTerminal('LAUNCH: ' + appName);
       const d = await postJson('/command', { command: appName });
       if (!d.ok) logTerminal('APP ERR: ' + (d.error || 'Failed'), true);
-    }
-
-    // Ultra-Low Latency Coalescing Mouse Pipeline
-    function queueRelativeMouse(dx, dy) {
-      pendingRelX += dx;
-      pendingRelY += dy;
-      if (!relInFlight) {
-        flushRelativeMouse();
-      }
-    }
-
-    async function flushRelativeMouse() {
-      if (relInFlight) return;
-      const sendX = Math.trunc(pendingRelX);
-      const sendY = Math.trunc(pendingRelY);
-      if (sendX === 0 && sendY === 0) return;
-
-      relInFlight = true;
-      pendingRelX -= sendX;
-      pendingRelY -= sendY;
-
-      try {
-        await postJson('/mouse_rel', { dx: sendX, dy: sendY });
-      } finally {
-        relInFlight = false;
-        if (Math.abs(pendingRelX) >= 1 || Math.abs(pendingRelY) >= 1) {
-          requestAnimationFrame(flushRelativeMouse);
-        }
-      }
-    }
-
-    function queueWheel(delta) {
-      pendingWheel += delta;
-      if (!wheelInFlight) {
-        flushWheel();
-      }
-    }
-
-    async function flushWheel() {
-      if (wheelInFlight || pendingWheel === 0) return;
-      wheelInFlight = true;
-      const delta = pendingWheel;
-      pendingWheel = 0;
-
-      try {
-        await postJson('/mouse_wheel', { delta });
-      } finally {
-        wheelInFlight = false;
-        if (pendingWheel !== 0) {
-          requestAnimationFrame(flushWheel);
-        }
-      }
-    }
-
-    // Ultra-crisp Pointer Glide Coordinator (Laptop trackpad replaced by D-Pad Glide)
-    function initDpadMouseSurface() {
-      // No-op for touch surface; directional glide engine active
     }
 
     // CLI & Macros
@@ -4799,6 +4663,10 @@
     // Modals
     function openSettingsModal() {
       fetchDevices();
+      const ipInp = document.getElementById('cfgIp');
+      if (ipInp && targetIp) {
+        ipInp.value = targetIp;
+      }
       document.getElementById('settingsModal').classList.add('active');
     }
 
@@ -4852,33 +4720,152 @@
       }
     }
 
-    // Settings Save & Scan
+    // Connection Management & Network Discovery
+    async function connectToIp(ip) {
+      if (!ip) return;
+      targetIp = ip;
+      const cfgIpEl = document.getElementById('cfgIp');
+      if (cfgIpEl) cfgIpEl.value = ip;
+      const ipLbl = document.getElementById('targetIpLabel');
+      if (ipLbl) ipLbl.textContent = ip;
+
+      showTapFeedback('CONNECTING');
+      setStatus('Connecting to ' + ip + '...', 'info');
+      logTerminal('Initiating ADB connection to ' + ip + ':5555...');
+
+      try {
+        const res = await postJson('/connect', { ip: ip });
+        if (res && res.connected) {
+          showTapFeedback('LINK ONLINE');
+          setStatus('CONNECTED: ' + ip, 'ok');
+          logTerminal('CONNECTED: Successfully linked to ' + ip + ':5555');
+          playTone(880, 0.08);
+          closeSettingsModal();
+          checkStatus();
+        } else {
+          showTapError('FAILED');
+          setStatus('Connection refused on ' + ip + ':5555', 'err');
+          logTerminal('CONNECTION FAILED: Target ' + ip + ' did not accept ADB handshake.');
+          playTone(300, 0.1);
+        }
+      } catch (err) {
+        showTapError('ERROR');
+        setStatus('Connect error: ' + err.message, 'err');
+        logTerminal('Error connecting to ' + ip + ': ' + err.message);
+      }
+    }
+
     async function saveAndConnect() {
       const ip = document.getElementById('cfgIp').value.trim();
-      const port = document.getElementById('cfgPort').value.trim();
       const dev = document.getElementById('modalDeviceSelect').value.trim();
+      if (!ip) return;
 
-      logTerminal('Connecting to ' + ip + ':' + port);
+      logTerminal('Saving connection settings: ' + ip);
       if (dev) {
         await postJson('/set_device', { device: dev });
       }
-      closeSettingsModal();
-      checkStatus();
+      await connectToIp(ip);
+    }
+
+    function selectIpForConfig(ip) {
+      const inp = document.getElementById('cfgIp');
+      if (inp) {
+        inp.value = ip;
+        inp.focus();
+        showTapFeedback('IP SELECTED');
+      }
     }
 
     async function runSubnetScan() {
       const res = document.getElementById('scanResultArea');
-      res.textContent = 'Scanning subnet devices...';
+      const scanBtn = document.getElementById('btnRunScan');
+      if (scanBtn) {
+        scanBtn.disabled = true;
+        scanBtn.textContent = 'Detecting...';
+      }
+
+      res.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; padding:10px 0; color:var(--text-secondary); font-size:11px;">
+          <div class="monitor-blip live" style="width:7px; height:7px;"></div>
+          <span>Discovering network devices & identifying Android targets...</span>
+        </div>
+      `;
+
       try {
-        const d = await postJson('/scan', {});
-        if (d.devices && d.devices.length > 0) {
-          res.textContent = 'Found ' + d.devices.length + ' input nodes.';
-          fetchDevices();
-        } else {
-          res.textContent = 'Scan complete.';
+        const currentInputIp = document.getElementById('cfgIp')?.value?.trim() || targetIp;
+        const d = await postJson('/scan', { base_ip: currentInputIp });
+
+        if (scanBtn) {
+          scanBtn.disabled = false;
+          scanBtn.textContent = 'Scan Network';
         }
+
+        if (!d.devices || d.devices.length === 0) {
+          res.innerHTML = `
+            <div style="padding:10px; background:rgba(255,255,255,0.04); border-radius:6px; color:var(--text-muted); font-size:11px;">
+              No responsive devices found on the local network. Make sure your Android device has Network Debugging turned ON.
+            </div>
+          `;
+          return;
+        }
+
+        let html = `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; margin-bottom:6px;">
+            <span style="font-size:11px; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">
+              Available Devices (${d.devices.length})
+            </span>
+            <span style="font-size:10px; color:var(--text-muted);">
+              Recommended Android target first
+            </span>
+          </div>
+          <div class="network-device-list">
+        `;
+
+        d.devices.forEach(dev => {
+          const isRec = dev.badge === 'RECOMMENDED';
+          const isCurr = (dev.ip === targetIp || dev.is_current);
+          const cardClass = isRec ? 'network-device-card recommended' : (isCurr ? 'network-device-card active-target' : 'network-device-card');
+
+          let badgeHtml = '';
+          if (isCurr) {
+            badgeHtml = '<span class="device-badge badge-current">CURRENT</span>';
+          } else if (isRec) {
+            badgeHtml = '<span class="device-badge badge-recommended">RECOMMENDED • ADB</span>';
+          } else if (dev.badge === 'ANDROID TV') {
+            badgeHtml = '<span class="device-badge badge-android-tv">ANDROID TV</span>';
+          } else {
+            badgeHtml = `<span class="device-badge badge-device">${escapeHtml(dev.badge || 'ACTIVE')}</span>`;
+          }
+
+          html += `
+            <div class="${cardClass}">
+              <div style="display:flex; flex-direction:column; gap:2px; min-width:0;">
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <span style="font-family:var(--font-mono); font-size:12px; font-weight:600; color:var(--text-primary);">${dev.ip}</span>
+                  ${badgeHtml}
+                </div>
+                <div style="font-size:10px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                  ${escapeHtml(dev.description || 'Network Host')} ${dev.mac && dev.mac !== 'Unknown' ? '• ' + dev.mac : ''}
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                <button class="device-action-btn secondary" onclick="selectIpForConfig('${dev.ip}')" title="Set in IP input">Select</button>
+                <button class="device-action-btn" onclick="connectToIp('${dev.ip}')" title="Connect immediately">Connect</button>
+              </div>
+            </div>
+          `;
+        });
+
+        html += `</div>`;
+        res.innerHTML = html;
+        logTerminal(`Network scan complete: ${d.devices.length} hosts found. Recommended: ${d.recommended || 'None'}`);
+
       } catch (e) {
-        res.textContent = 'Scan error: ' + e.message;
+        if (scanBtn) {
+          scanBtn.disabled = false;
+          scanBtn.textContent = 'Scan Network';
+        }
+        res.innerHTML = `<div style="color:var(--cinema-ruby); font-size:11px; padding:6px 0;">Scan error: ${e.message}</div>`;
       }
     }
 
@@ -5353,41 +5340,6 @@
           winRenameSelected();
           return;
         }
-      }
-
-      // Directional keys in Mouse Mode (Arrow Keys & WASD)
-      const dpadKeyMap = {
-        'ArrowUp': 'UP', 'w': 'UP', 'W': 'UP',
-        'ArrowDown': 'DOWN', 's': 'DOWN', 'S': 'DOWN',
-        'ArrowLeft': 'LEFT', 'a': 'LEFT', 'A': 'LEFT',
-        'ArrowRight': 'RIGHT', 'd': 'RIGHT', 'D': 'RIGHT'
-      };
-
-      if (mouseMode && dpadKeyMap[e.key]) {
-        e.preventDefault();
-        const dir = dpadKeyMap[e.key];
-        if (!heldKeyMap.has(e.key)) {
-          // Initial crisp 36px step
-          handleDpadAction(dir, false);
-
-          // Start smooth glide after 250ms delay
-          const tHold = setTimeout(() => {
-            const tInterval = setInterval(() => {
-              handleDpadAction(dir, true);
-            }, 85);
-            heldKeyMap.set(e.key, { timeout: null, interval: tInterval });
-          }, 250);
-
-          heldKeyMap.set(e.key, { timeout: tHold, interval: null });
-        }
-        return;
-      }
-
-      // Enter or Spacebar tap in Mouse Mode
-      if (mouseMode && (e.key === 'Enter' || e.key === ' ')) {
-        e.preventDefault();
-        handleOkAction();
-        return;
       }
 
       if (activeKeyMap[e.key]) {
@@ -6261,7 +6213,6 @@
 
     // Startup initialization
     bind15Buttons();
-    initDpadMouseSurface();
     restoreTab();
     loadUserMacros();
     loadPinnedApps();
